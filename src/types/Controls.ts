@@ -1,4 +1,4 @@
-export default interface Controls {
-  left: ('A' | 'LeftArrow' | 'J'),
-  right: ('D' | 'RightArrow' | 'L')
+export interface Controls {
+  left: ('a' | 'ArrowLeft' | 'j'),
+  right: ('d' | 'ArrowRight' | 'l')
 }

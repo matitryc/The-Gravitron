@@ -4,7 +4,7 @@ import GameField from './components/GameField.vue'
 
 <template>
   <GameField></GameField>
-  <h1 class="block h-[5vh] bg-gray-950 text-white text-3xl text-center p-2">The Gravitron</h1>
+  <h1 class="flex items-center justify-center h-[5vh] bg-gray-950 text-white text-3xl text-center">The Gravitron</h1>
 </template>
 
 <style scoped>
