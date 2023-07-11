@@ -8,11 +8,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
-import type { MovementValues, CurrentMovement } from '../types/Movement.js'
+import type { MovementValues, CurrentMovement, Direction } from '../types/Movement.js'
 import type { Controls } from '../types/Controls.js'
 const props = defineProps<{
-  index: number
+  index: number,
+  gravity: number
 }>()
+const emit = defineEmits(['move'])
 const movementSpeed = 1
 const horizontalMovement = 2
 const player = ref<HTMLDivElement | null>(null)
@@ -35,71 +37,68 @@ const distance = reactive<MovementValues>({
   y: 0
 })
 const moveIntervals = reactive<CurrentMovement>({
-  left: null,
-  right: null,
-  up: null,
-  down: null
+  left: undefined,
+  right: undefined,
+  up: undefined,
+  down: undefined
 })
 const position = ref<DOMRect | null>(null)
-const move = {
-  left: (): void => {
-    if(position.value){
-      const nextDistance = position.value.x - horizontalMovement
-      if(nextDistance > 0){
+const move = (direction: Direction): void => {
+  if(position.value){
+    if(direction === 'left'){
+      const distanceFromLeft = position.value.x - horizontalMovement
+      if(distanceFromLeft > 0){
         distance.x -= horizontalMovement
       }
     }
-  },
-  right: (): void => {
-    if(position.value){
-      const nextDistance = position.value.x + horizontalMovement
-      const playerStickingToRightBorderDistance = window.innerWidth - position.value.width
-      if(nextDistance < playerStickingToRightBorderDistance){
+    else if(direction === 'right'){
+      const distanceFromLeft = position.value.x + horizontalMovement
+      const maxPlayerDistance = window.innerWidth - position.value.width
+      if(distanceFromLeft < maxPlayerDistance){
         distance.x += horizontalMovement
       }
     }
   }
+  emit('move', position.value)
 }
-const handleMovementIntervalSet = (e: KeyboardEvent): void => {
+const playerMove = (e: KeyboardEvent): void => {
   const key: string = e.key
+  let direction: Direction = null  
   if(key === controls[props.index].left){
-    if(!moveIntervals.left){
-      const leftIntervalID = setInterval(move.left, movementSpeed)
-      moveIntervals.left = leftIntervalID
-    }
+    direction = 'left'
   }
   else if(key === controls[props.index].right){
-    if(!moveIntervals.right){
-      const rightIntervalID = setInterval(move.right, movementSpeed)
-      moveIntervals.right = rightIntervalID
-    }
+    direction = 'right'
+  }
+  if(direction && !moveIntervals[direction]){
+    const intervalID = setInterval(() => move(direction), movementSpeed)
+    moveIntervals[direction] = intervalID
   }
 }
-const handleMovementIntervalsRemoval = (e: KeyboardEvent): void => {
+const playerStopMoving = (e: KeyboardEvent): void => {
   const key: string = e.key
+  let direction: Direction = null
   if(key === controls[props.index].left){
-    if(moveIntervals.left){
-      clearInterval(moveIntervals.left)
-      moveIntervals.left = null
-    }
+    direction = 'left'
   }
   else if(key === controls[props.index].right){
-    if(moveIntervals.right){
-      clearInterval(moveIntervals.right)
-      moveIntervals.right = null
-    }
+    direction = 'right'
+  }
+  if(direction){
+    clearInterval(moveIntervals[direction])
+    moveIntervals[direction] = undefined
   }
 }
 watch(distance, () => {
   if(player.value){
-    //-50% so it's positioned in the center at the beggining
+    //-50% so it's positioned in the center at the beginning
     position.value = player.value.getBoundingClientRect()
     player.value.style.transform = `translate(Calc(-50% + ${distance.x}px), Calc(-50% + ${distance.y}px))`
   }
 })
 onMounted(() => {
-  window.addEventListener('keydown', handleMovementIntervalSet)
-  window.addEventListener('keyup', handleMovementIntervalsRemoval)
+  window.addEventListener('keydown', playerMove)
+  window.addEventListener('keyup', playerStopMoving)
   if(player.value){
     position.value = player.value?.getBoundingClientRect()
   }

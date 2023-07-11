@@ -3,8 +3,9 @@ export interface MovementValues {
   y: number
 }
 export interface CurrentMovement {
-  left: null | number,
-  right: null | number,
-  up: null | number,
-  down: null | number
+  left: number | undefined,
+  right: number | undefined,
+  up: number | undefined,
+  down: number | undefined
 }
+export type Direction = 'left' | 'right' | 'up' | 'down' | null
