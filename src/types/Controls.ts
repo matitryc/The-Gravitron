@@ -1,4 +1,12 @@
-export interface Controls {
-  left: ('a' | 'ArrowLeft' | 'j'),
-  right: ('d' | 'ArrowRight' | 'l')
+export type Controls = {
+  left: 'a' ,
+  right: 'd'
+} |
+{
+  left: 'ArrowLeft',
+  right: 'ArrowRight'
+} |
+{
+  left: 'j',
+  right: 'l'
 }

@@ -1,4 +1,1 @@
-export enum Gravity {
-  normal = 0,
-  reversed = 180
-}
+export type Gravity = 'down' | 'up'

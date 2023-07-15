@@ -1,4 +1,4 @@
-export interface MovementValues {
+export interface Distance {
   x: number,
   y: number
 }
@@ -8,4 +8,4 @@ export interface CurrentMovement {
   up: number | undefined,
   down: number | undefined
 }
-export type Direction = 'left' | 'right' | 'up' | 'down' | null
+export type HorizontalDirection = 'left' | 'right' | null

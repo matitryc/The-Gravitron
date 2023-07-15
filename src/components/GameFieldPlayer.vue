@@ -1,38 +1,23 @@
 <template>
-  <div ref="player" class="player relative h-[9vh] w-[5vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-400">
-    <div class="eye absolute top-[10%] -left-[10%] w-5 h-5 bg-black border-4 border-white"></div>
-    <div class="eye absolute top-[10%] -right-[10%] w-5 h-5 bg-black border-4 border-white"></div>
-    <div class="smile absolute left-1/2 top-1/2 w-3/4 h-[3px] -translate-x-[50%] bg-black"></div>
-  </div>
+  <img src="./../../player_1.png" ref="container" class="player relative h-[9vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90">
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
-import type { MovementValues, CurrentMovement, Direction } from '../types/Movement.js'
-import type { Controls } from '../types/Controls.js'
+import type { Distance, CurrentMovement, HorizontalDirection } from '../types/Movement.js'
+import type { Player } from '../types/Player.js'
+import type { Gravity } from '../types/Gravity.js'
 const props = defineProps<{
-  index: number,
-  gravity: number
+  player: Player
 }>()
-const emit = defineEmits(['move'])
-const movementSpeed = 1
-const horizontalMovement = 2
-const player = ref<HTMLDivElement | null>(null)
-const controls = <Controls[]>[
-  {
-    left: 'a',
-    right: 'd'
-  },
-  {
-    left: 'ArrowLeft',
-    right: 'ArrowRight'
-  },
-  {
-    left: 'j',
-    right: 'l'
-  }
-]
-const distance = reactive<MovementValues>({
+const emit = defineEmits(['position-change'])
+const movementInterval = 1
+const horizontalMovement = 3
+const verticalMovement = 3
+const gravityRotate = ref(0)
+const directionYRotate = ref<0 | 180>(180)
+const container = ref<HTMLImageElement | null>(null)
+const distance = reactive<Distance>({
   x: 0,
   y: 0
 })
@@ -42,46 +27,73 @@ const moveIntervals = reactive<CurrentMovement>({
   up: undefined,
   down: undefined
 })
-const position = ref<DOMRect | null>(null)
-const move = (direction: Direction): void => {
-  if(position.value){
-    if(direction === 'left'){
-      const distanceFromLeft = position.value.x - horizontalMovement
+const playerRECT = ref<DOMRect | null>(null)
+const setGravityRotate = (): void => {
+  if(props.player.gravity === 'down'){
+    gravityRotate.value = 0
+  }
+  else {
+    gravityRotate.value = 180
+  }
+}
+const setDistance = (direction: HorizontalDirection | Gravity): void => {
+  if(playerRECT.value){
+    if(direction === 'left' && !moveIntervals.right){
+      const distanceFromLeft = playerRECT.value.x - horizontalMovement
       if(distanceFromLeft > 0){
         distance.x -= horizontalMovement
       }
     }
-    else if(direction === 'right'){
-      const distanceFromLeft = position.value.x + horizontalMovement
-      const maxPlayerDistance = window.innerWidth - position.value.width
-      if(distanceFromLeft < maxPlayerDistance){
+    else if(direction === 'right' && !moveIntervals.left){
+      const distanceFromLeft = playerRECT.value.x + horizontalMovement
+      const maxHorizontal = window.innerWidth - playerRECT.value.width
+      if(distanceFromLeft < maxHorizontal){
         distance.x += horizontalMovement
       }
     }
+    else if(direction === 'up'){
+      const distanceFromTop = playerRECT.value.y - verticalMovement
+      if(distanceFromTop > 0){
+        distance.y -= verticalMovement
+      }
+    }
+    else if(direction === 'down'){
+      const distanceFromTop = playerRECT.value.y + verticalMovement
+      const maxVertical = window.innerHeight - playerRECT.value.height
+      if(distanceFromTop < maxVertical){
+        distance.y += verticalMovement
+      }
+    }
   }
-  emit('move', position.value)
+  emit('position-change', { id: props.player.id, position: playerRECT.value })
 }
-const playerMove = (e: KeyboardEvent): void => {
+const moveHorizontally = (e: KeyboardEvent): void => {
   const key: string = e.key
-  let direction: Direction = null  
-  if(key === controls[props.index].left){
+  let direction: HorizontalDirection = null  
+  if(key === props.player.controls.left){
     direction = 'left'
   }
-  else if(key === controls[props.index].right){
+  else if(key === props.player.controls.right){
     direction = 'right'
   }
   if(direction && !moveIntervals[direction]){
-    const intervalID = setInterval(() => move(direction), movementSpeed)
+    const intervalID = setInterval(() => setDistance(direction), movementInterval)
     moveIntervals[direction] = intervalID
   }
 }
-const playerStopMoving = (e: KeyboardEvent): void => {
+const moveVertically = (): void => {
+  moveIntervals.down = undefined
+  moveIntervals.up = undefined
+  const verticalInterval = setInterval(() => setDistance(props.player.gravity), movementInterval)
+  moveIntervals[props.player.gravity] = verticalInterval
+} 
+const stopOneHorizontalMovement = (e: KeyboardEvent): void => {
   const key: string = e.key
-  let direction: Direction = null
-  if(key === controls[props.index].left){
+  let direction: HorizontalDirection = null
+  if(key === props.player.controls.left){
     direction = 'left'
   }
-  else if(key === controls[props.index].right){
+  else if(key === props.player.controls.right){
     direction = 'right'
   }
   if(direction){
@@ -89,22 +101,50 @@ const playerStopMoving = (e: KeyboardEvent): void => {
     moveIntervals[direction] = undefined
   }
 }
-watch(distance, () => {
-  if(player.value){
+const stopAllHorizontalMovement = () => {
+  clearInterval(moveIntervals.left)
+  moveIntervals.left = undefined
+  clearInterval(moveIntervals.right)
+  moveIntervals.right = undefined
+}
+const setPlayersDistanceAndGravityRotation = (): void => {
+  if(container.value){
     //-50% so it's positioned in the center at the beginning
-    position.value = player.value.getBoundingClientRect()
-    player.value.style.transform = `translate(Calc(-50% + ${distance.x}px), Calc(-50% + ${distance.y}px))`
+    if(moveIntervals.right){
+      directionYRotate.value = 0
+    }
+    else if(moveIntervals.left){
+      directionYRotate.value = 180
+    }
+    container.value.style.transform = `translate(Calc(-50% + ${distance.x}px), Calc(-50% + ${distance.y}px)) rotateX(${gravityRotate.value}deg) rotateY(${directionYRotate.value}deg)`
+  }
+}
+watch(props, () => {
+  setGravityRotate()
+  setPlayersDistanceAndGravityRotation()
+})
+watch(distance, () => {
+  setPlayersDistanceAndGravityRotation()
+  if(container.value){
+    playerRECT.value = container.value.getBoundingClientRect()
   }
 })
 onMounted(() => {
-  window.addEventListener('keydown', playerMove)
-  window.addEventListener('keyup', playerStopMoving)
-  if(player.value){
-    position.value = player.value?.getBoundingClientRect()
+  window.addEventListener('keydown', moveHorizontally)
+  window.addEventListener('keyup', stopOneHorizontalMovement)
+  window.addEventListener('blur', stopAllHorizontalMovement)
+  window.addEventListener('resize', () => {
+    if(container.value){
+      playerRECT.value = container.value.getBoundingClientRect()
+    }
+  })
+  moveVertically()
+  setGravityRotate()
+  if(container.value){
+    playerRECT.value = container.value?.getBoundingClientRect()
   }
 })
 </script>
 
 <style scoped>
-
 </style>
