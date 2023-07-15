@@ -1,28 +1,47 @@
 <template>
-  <div class="game-field relative h-full w-full max-w-[130vh] bg-zinc-800 text-gray-50 overflow-hidden">
+  <div ref="gameField" class="game-field relative h-full w-full max-w-[130vh] bg-zinc-800 text-gray-50 overflow-hidden">
     <GameFieldGravityChangers @change-gravity="changePlayerGravity" :positionedPlayer="currentPlayerPosition" />
-    <GameFieldPlayer @position-change="changePlayerPosition" v-for="player in players" :key="player.id" :player="player"/>
+    <GameFieldPlayer v-for="(player, index) in players" :key="player.id"  @position-change="changePlayerPosition" :index="index" :gameFieldRECT="gameFieldRECT" :player="player"/>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import GameFieldGravityChangers from './GameFieldGravityChangers.vue'
 import GameFieldPlayer from './GameFieldPlayer.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
 const players = ref<Player[]>([
   {
     id: Math.random(),
-    gravity: 'down',
+    gravity: 'up',
     controls: {
       left: 'a',
       right: 'd'
     }
+  },
+  {
+    id: Math.random(),
+    gravity: 'down',
+    controls: {
+      left: 'ArrowLeft',
+      right: 'ArrowRight'
+    }
+  },
+  {
+    id: Math.random(),
+    gravity: 'down',
+    controls: {
+      left: 'j',
+      right: 'l'
+    }
   }
 ])
+const gameField = ref<HTMLDivElement | null>(null)
+const gameFieldRECT = ref<DOMRect | null>(null)
 const playerPositions = ref<PlayerPosition[]>([])
 const currentPlayerPosition = ref<PlayerPosition | null>(null)
 const changePlayerPosition = (newPosition: PlayerPosition): void => {
+  currentPlayerPosition.value = newPosition
   const oldPosition = playerPositions.value.find(position => position.id === newPosition.id)
   if(oldPosition){
     const oldPositionIndex = playerPositions.value.indexOf(oldPosition)
@@ -43,10 +62,10 @@ const changePlayerGravity = (id: number): void => {
     }
   }
 }
-watch(playerPositions, (newPosition) => {
-  currentPlayerPosition.value = newPosition[0]
-}, {
-  deep: true
+onMounted(() => {
+  if(gameField.value){
+    gameFieldRECT.value = gameField.value?.getBoundingClientRect()
+  }
 })
 </script>
 
