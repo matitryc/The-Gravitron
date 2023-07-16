@@ -24,8 +24,8 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['position-change', 'collision', 'freedom'])
 const movementInterval = 1
-const horizontalMovement = ref<number>(0)
-const verticalMovement = ref<number>(0)
+const horizontalMovement = ref<number>(1)
+const verticalMovement = ref<number>(1)
 const gravityRotate = ref(0)
 const directionYRotate = ref<0 | 180>(180)
 const playerRECT = ref<DOMRect | null>(null)
@@ -137,15 +137,14 @@ const setPlayersDistanceAndGravityRotation = (): void => {
     `
   }
 }
-const switchPlayerWithDoppelganger = (doppelgangerRECT: DOMRect): void => {
-  console.log('switch')
+const switchPlayerWithDoppelganger = (): void => {
   if(props.gameFieldRECT && playerRECT.value){
     let oppositeDistance: number
     if(playerRECT.value.x >= props.gameFieldRECT.width / 2){
-      oppositeDistance = Math.floor(doppelgangerRECT.x - props.gameFieldRECT.width / 2)
+      oppositeDistance = - props.gameFieldRECT.width / 2 - playerRECT.value.width / 2
     }
     else {
-      oppositeDistance = Math.floor(-doppelgangerRECT.x + props.gameFieldRECT.width / 2)
+      oppositeDistance = props.gameFieldRECT.width / 2 - playerRECT.value.width / 2
     }
     distance.x = oppositeDistance
   }
@@ -154,8 +153,8 @@ watch(props, () => {
   setGravityRotate()
   setPlayersDistanceAndGravityRotation()
   if(props.gameFieldRECT){
-    horizontalMovement.value = props.gameFieldRECT.width / 360 //3px on full res
-    verticalMovement.value = props.gameFieldRECT.height / 286 //3px on full res
+    // horizontalMovement.value = props.gameFieldRECT.width / 360 //3px on full res
+    // verticalMovement.value = props.gameFieldRECT.height / 286 //3px on full res
   }
 })
 watch(distance, () => {

@@ -17,7 +17,7 @@ const doppelgangerRECT = ref<DOMRect | null>(null)
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if(entry.isIntersecting){
-      emit('switch', doppelgangerRECT.value)
+      emit('switch')
     }
   })
 }, {
@@ -29,10 +29,11 @@ watch(props, () => {
   if(doppelganger.value && props.playerPosition && props.gameFieldRECT){
     let distanceX: number
     if(props.playerPosition.x <= window.innerWidth / 2){
-      distanceX = props.gameFieldRECT.width + props.playerPosition.x - props.playerPosition.width
+      distanceX = props.gameFieldRECT.width - (window.innerWidth - props.gameFieldRECT.width) / 2 + props.playerPosition.x + props.playerPosition.width / 2
     }
     else {
-      distanceX = props.playerPosition.x - props.gameFieldRECT.width - props.playerPosition.width
+      distanceX = props.playerPosition.x - props.gameFieldRECT.width - props.playerPosition.width / 2 - (window.innerWidth - props.gameFieldRECT.width) / 2
+      console.log(props.playerPosition.x)
     }
     doppelganger.value.style.transform = `
       translate(Calc(-50% + ${distanceX}px), ${props.playerPosition.y - props.playerPosition.height}px) 
