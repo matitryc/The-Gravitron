@@ -32,8 +32,7 @@ watch(props, () => {
       distanceX = props.gameFieldRECT.width - (window.innerWidth - props.gameFieldRECT.width) / 2 + props.playerPosition.x + props.playerPosition.width / 2
     }
     else {
-      distanceX = props.playerPosition.x - props.gameFieldRECT.width - props.playerPosition.width / 2 - (window.innerWidth - props.gameFieldRECT.width) / 2
-      console.log(props.playerPosition.x)
+      distanceX = props.playerPosition.x - props.gameFieldRECT.width + props.playerPosition.width / 2 - (window.innerWidth - props.gameFieldRECT.width) / 2
     }
     doppelganger.value.style.transform = `
       translate(Calc(-50% + ${distanceX}px), ${props.playerPosition.y - props.playerPosition.height}px) 
