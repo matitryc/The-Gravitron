@@ -1,25 +1,36 @@
 <template>
-  <img :src="`./../../player_${index}.png`" ref="container" class="player relative h-[9vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90">
+  <img ref="container"  :src="`./../../player_${index}.png`" class="player relative h-[9vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90">
+  <GameFieldPlayerDoppelganger 
+    v-if="player.collides"
+    @switch="switchPlayerWithDoppelganger"
+    :index="index" 
+    :playerPosition="playerRECT" 
+    :gravityRotate="gravityRotate" 
+    :directionRotate="directionYRotate"
+    :gameFieldRECT="gameFieldRECT"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
-import type { Distance, CurrentMovement, HorizontalDirection } from '../types/Movement.js'
+import type { CurrentMovement, HorizontalDirection } from '../types/Movement.js'
 import type { Player } from '../types/Player.js'
 import type { Gravity } from '../types/Gravity.js'
+import GameFieldPlayerDoppelganger from './GameFieldPlayerDoppelganger.vue'
 const props = defineProps<{
   gameFieldRECT: DOMRect | null
   player: Player
   index: number
 }>()
-const emit = defineEmits(['position-change'])
+const emit = defineEmits(['position-change', 'collision', 'freedom'])
 const movementInterval = 1
 const horizontalMovement = ref<number>(0)
 const verticalMovement = ref<number>(0)
 const gravityRotate = ref(0)
 const directionYRotate = ref<0 | 180>(180)
+const playerRECT = ref<DOMRect | null>(null)
 const container = ref<HTMLImageElement | null>(null)
-const distance = reactive<Distance>({
+const distance = reactive({
   x: 0,
   y: 0
 })
@@ -29,7 +40,6 @@ const moveIntervals = reactive<CurrentMovement>({
   up: undefined,
   down: undefined
 })
-const playerRECT = ref<DOMRect | null>(null)
 const setGravityRotate = (): void => {
   if(props.player.gravity === 'down'){
     gravityRotate.value = 0
@@ -38,21 +48,22 @@ const setGravityRotate = (): void => {
     gravityRotate.value = 180
   }
 }
-const setDistance = (direction: HorizontalDirection | Gravity): void => {
+const handleDistance = (direction: HorizontalDirection | Gravity): void => {
   if(playerRECT.value && props.gameFieldRECT){
+    const maxHorizontal = ((window.innerWidth - props.gameFieldRECT.width) / 2) + props.gameFieldRECT.width - playerRECT.value.width
+    const minHorizontal = (window.innerWidth - props.gameFieldRECT.width) / 2
+    const distanceFromLeft = playerRECT.value.x
+    if(distanceFromLeft + horizontalMovement.value >= maxHorizontal || distanceFromLeft - horizontalMovement.value <= minHorizontal){
+      emit('collision')
+    }
+    else {
+      emit('freedom')
+    }
     if(direction === 'left' && !moveIntervals.right){
-      const distanceFromLeft = playerRECT.value.x - horizontalMovement.value
-      const minHorizontal = (window.innerWidth - props.gameFieldRECT.width) / 2
-      if(distanceFromLeft > minHorizontal){
-        distance.x -= horizontalMovement.value
-      }
+      distance.x -= horizontalMovement.value
     }
     else if(direction === 'right' && !moveIntervals.left){
-      const distanceFromLeft = playerRECT.value.x + horizontalMovement.value
-      const maxHorizontal = ((window.innerWidth - props.gameFieldRECT.width) / 2) + props.gameFieldRECT.width - playerRECT.value.width
-      if(distanceFromLeft < maxHorizontal){
-        distance.x += horizontalMovement.value
-      }
+      distance.x += horizontalMovement.value
     }
     else if(direction === 'up'){
       const distanceFromTop = playerRECT.value.y - verticalMovement.value
@@ -80,14 +91,14 @@ const moveHorizontally = (e: KeyboardEvent): void => {
     direction = 'right'
   }
   if(direction && !moveIntervals[direction]){
-    const intervalID = setInterval(() => setDistance(direction), movementInterval)
+    const intervalID = setInterval(() => handleDistance(direction), movementInterval)
     moveIntervals[direction] = intervalID
   }
 }
 const moveVertically = (): void => {
   moveIntervals.down = undefined
   moveIntervals.up = undefined
-  const verticalInterval = setInterval(() => setDistance(props.player.gravity), movementInterval)
+  const verticalInterval = setInterval(() => handleDistance(props.player.gravity), movementInterval)
   moveIntervals[props.player.gravity] = verticalInterval
 } 
 const stopOneHorizontalMovement = (e: KeyboardEvent): void => {
@@ -119,7 +130,24 @@ const setPlayersDistanceAndGravityRotation = (): void => {
     else if(moveIntervals.left){
       directionYRotate.value = 180
     }
-    container.value.style.transform = `translate(Calc(-50% + ${distance.x}px), Calc(-50% + ${distance.y}px)) rotateX(${gravityRotate.value}deg) rotateY(${directionYRotate.value}deg)`
+    container.value.style.transform = `
+      translate(Calc(-50% + ${distance.x}px), Calc(-50% + ${distance.y}px)) 
+      rotateX(${gravityRotate.value}deg) 
+      rotateY(${directionYRotate.value}deg)
+    `
+  }
+}
+const switchPlayerWithDoppelganger = (doppelgangerRECT: DOMRect): void => {
+  console.log('switch')
+  if(props.gameFieldRECT && playerRECT.value){
+    let oppositeDistance: number
+    if(playerRECT.value.x >= props.gameFieldRECT.width / 2){
+      oppositeDistance = Math.floor(doppelgangerRECT.x - props.gameFieldRECT.width / 2)
+    }
+    else {
+      oppositeDistance = Math.floor(-doppelgangerRECT.x + props.gameFieldRECT.width / 2)
+    }
+    distance.x = oppositeDistance
   }
 }
 watch(props, () => {

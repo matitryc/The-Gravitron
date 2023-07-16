@@ -1,7 +1,17 @@
 <template>
   <div ref="gameField" class="game-field relative h-full w-full max-w-[130vh] bg-zinc-800 text-gray-50 overflow-hidden">
     <GameFieldGravityChangers @change-gravity="changePlayerGravity" :positionedPlayer="currentPlayerPosition" />
-    <GameFieldPlayer v-for="(player, index) in players" :key="player.id"  @position-change="changePlayerPosition" :index="index" :gameFieldRECT="gameFieldRECT" :player="player"/>
+    <GameFieldPlayer 
+      v-for="(player, index) in players" 
+      :key="player.id"  
+      @position-change="changePlayerPosition"
+      @collision="player.collides = true"
+      @freedom="player.collides = false"
+      :index="index" 
+      :gameFieldRECT="gameFieldRECT" 
+      :player="player"
+
+    />
   </div>
 </template>
 
@@ -13,27 +23,12 @@ import type { Player, PlayerPosition } from '../types/Player.js'
 const players = ref<Player[]>([
   {
     id: Math.random(),
-    gravity: 'up',
+    gravity: 'down',
     controls: {
       left: 'a',
       right: 'd'
-    }
-  },
-  {
-    id: Math.random(),
-    gravity: 'down',
-    controls: {
-      left: 'ArrowLeft',
-      right: 'ArrowRight'
-    }
-  },
-  {
-    id: Math.random(),
-    gravity: 'down',
-    controls: {
-      left: 'j',
-      right: 'l'
-    }
+    },
+    collides: false
   }
 ])
 const gameField = ref<HTMLDivElement | null>(null)

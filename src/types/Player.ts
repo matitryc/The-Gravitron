@@ -4,7 +4,8 @@ import type { Controls } from './Controls.js'
 export interface Player {
   id: number,
   gravity: Gravity,
-  controls: Controls
+  controls: Controls,
+  collides: boolean
 }
 
 export interface PlayerPosition {

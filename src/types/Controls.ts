@@ -1,12 +1,12 @@
 export type Controls = {
-  left: 'a' ,
-  right: 'd'
+  left: 'a' | 'A',
+  right: 'd' | 'D'
 } |
 {
   left: 'ArrowLeft',
   right: 'ArrowRight'
 } |
 {
-  left: 'j',
-  right: 'l'
+  left: 'j' | 'J',
+  right: 'l' | 'L'
 }

@@ -1,7 +1,3 @@
-export interface Distance {
-  x: number,
-  y: number
-}
 export interface CurrentMovement {
   left: number | undefined,
   right: number | undefined,
