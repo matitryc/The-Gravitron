@@ -6,14 +6,17 @@
 import { ref, watch, onMounted } from 'vue'
 const props = defineProps<{
   index: number
-  playerPosition: DOMRect | null
+  playerPosition: DOMRect | undefined
   gravityRotate: number
   directionRotate: number
-  gameFieldRECT: DOMRect | null
+  gameFieldRECT: DOMRect | undefined
+  fail: boolean
 }>()
-const emit = defineEmits(['switch'])
-const doppelganger = ref<HTMLImageElement | null>(null)
-const doppelgangerRECT = ref<DOMRect | null>(null)
+const emit = defineEmits<{
+  (e: 'switch'): void
+}>()
+const doppelganger = ref<HTMLImageElement | undefined>()
+const doppelgangerRECT = ref<DOMRect | undefined>()
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if(entry.isIntersecting){

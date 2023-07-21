@@ -8,6 +8,7 @@
     :gravityRotate="gravityRotate" 
     :directionRotate="directionYRotate"
     :gameFieldRECT="gameFieldRECT"
+    :fail="fail"
   />
 </template>
 
@@ -18,18 +19,23 @@ import type { Player } from '../types/Player.js'
 import type { Gravity } from '../types/Gravity.js'
 import GameFieldPlayerDoppelganger from './GameFieldPlayerDoppelganger.vue'
 const props = defineProps<{
-  gameFieldRECT: DOMRect | null
+  gameFieldRECT: DOMRect | undefined
   player: Player
   index: number
+  fail: boolean
 }>()
-const emit = defineEmits(['position-change', 'collision', 'freedom'])
+const emit = defineEmits<{
+  (e: 'position-change', value: { id: number, position: DOMRect }): void
+  (e: 'collision'): void
+  (e: 'freedom'): void
+}>()
 const movementInterval = 1
 const horizontalMovement = ref<number>(0)
 const verticalMovement = ref<number>(0)
 const gravityRotate = ref(0)
 const directionYRotate = ref<0 | 180>(180)
-const playerRECT = ref<DOMRect | null>(null)
-const container = ref<HTMLImageElement | null>(null)
+const playerRECT = ref<DOMRect | undefined>()
+const container = ref<HTMLImageElement | undefined>()
 const distance = reactive({
   x: 0,
   y: 0
@@ -78,8 +84,8 @@ const handleDistance = (direction: HorizontalDirection | Gravity): void => {
         distance.y += verticalMovement.value
       }
     }
+    emit('position-change', { id: props.player.id, position: playerRECT.value })
   }
-  emit('position-change', { id: props.player.id, position: playerRECT.value })
 }
 const moveHorizontally = (e: KeyboardEvent): void => {
   const key: string = e.key
@@ -154,29 +160,23 @@ watch(props, () => {
   setPlayersDistanceAndGravityRotation()
   if(props.gameFieldRECT){
     horizontalMovement.value = props.gameFieldRECT.width / 360 //3px on full res
-    verticalMovement.value = props.gameFieldRECT.height / 286 //3px on full res
+    verticalMovement.value = props.gameFieldRECT.height / 225
   }
 })
 watch(distance, () => {
   setPlayersDistanceAndGravityRotation()
-  if(container.value){
-    playerRECT.value = container.value.getBoundingClientRect()
-  }
+  playerRECT.value = container.value?.getBoundingClientRect()
 })
 onMounted(() => {
+  moveVertically()
+  setGravityRotate()
+  playerRECT.value = container.value?.getBoundingClientRect()
   window.addEventListener('keydown', moveHorizontally)
   window.addEventListener('keyup', stopOneHorizontalMovement)
   window.addEventListener('blur', stopAllHorizontalMovement)
   window.addEventListener('resize', () => {
-    if(container.value){
-      playerRECT.value = container.value.getBoundingClientRect()
-    }
-  })
-  moveVertically()
-  setGravityRotate()
-  if(container.value){
     playerRECT.value = container.value?.getBoundingClientRect()
-  }
+  })
 })
 </script>
 

@@ -1,5 +1,7 @@
 <template>
   <div ref="gameField" class="game-field relative h-full w-full max-w-[130vh] bg-zinc-800 text-gray-50 overflow-hidden">
+    <GameFieldBackground />
+    <GameFieldTimer :fail="fail"/>
     <GameFieldGravityChangers @change-gravity="changePlayerGravity" :positionedPlayer="currentPlayerPosition" />
     <GameFieldPlayer 
       v-for="(player, index) in players" 
@@ -10,8 +12,11 @@
       :index="index" 
       :gameFieldRECT="gameFieldRECT" 
       :player="player"
-
+      :fail="fail"
     />
+    <button @click="failGame" class="absolute bottom-[10%] left-1/2 -translate-x-1/2 bg-white px-8 py-4 text-black text-3xl">
+      KILL!
+    </button>
   </div>
 </template>
 
@@ -19,6 +24,8 @@
 import { ref, onMounted } from 'vue'
 import GameFieldGravityChangers from './GameFieldGravityChangers.vue'
 import GameFieldPlayer from './GameFieldPlayer.vue'
+import GameFieldTimer from './GameFieldTimer.vue'
+import GameFieldBackground from './GameFieldBackground.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
 const players = ref<Player[]>([
   {
@@ -31,10 +38,11 @@ const players = ref<Player[]>([
     collides: false
   }
 ])
-const gameField = ref<HTMLDivElement | null>(null)
-const gameFieldRECT = ref<DOMRect | null>(null)
+const gameField = ref<HTMLDivElement | undefined>()
+const gameFieldRECT = ref<DOMRect | undefined>()
 const playerPositions = ref<PlayerPosition[]>([])
-const currentPlayerPosition = ref<PlayerPosition | null>(null)
+const fail = ref(false)
+const currentPlayerPosition = ref<PlayerPosition | undefined>()
 const changePlayerPosition = (newPosition: PlayerPosition): void => {
   currentPlayerPosition.value = newPosition
   const oldPosition = playerPositions.value.find(position => position.id === newPosition.id)
@@ -57,10 +65,12 @@ const changePlayerGravity = (id: number): void => {
     }
   }
 }
+const failGame = () => {}
 onMounted(() => {
-  if(gameField.value){
+  gameFieldRECT.value = gameField.value?.getBoundingClientRect()
+  window.addEventListener('resize', () => {
     gameFieldRECT.value = gameField.value?.getBoundingClientRect()
-  }
+  })
 })
 </script>
 

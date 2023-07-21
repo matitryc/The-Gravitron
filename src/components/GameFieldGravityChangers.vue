@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div ref="upper" class="gravity-changer absolute top-[22.5%] w-full h-[2px] bg-slate-50"></div>
-    <div ref="lower" class="gravity-changer absolute bottom-[22.5%] w-full h-[2px] bg-slate-50">
+    <div ref="upper" class="gravity-changer absolute top-[22.5%] w-full h-[2px] bg-gray-200"></div>
+    <div ref="lower" class="gravity-changer absolute bottom-[22.5%] w-full h-[2px] bg-gray-200">
     </div>
   </div>
  
@@ -11,19 +11,19 @@
 import { ref, onMounted, watch } from 'vue'
 import type { PlayerPosition } from '../types/Player.js'
 const props = defineProps<{
-  positionedPlayer: PlayerPosition | null
+  positionedPlayer: PlayerPosition | undefined
 }>()
-const emit = defineEmits(['change-gravity'])
+const emit = defineEmits<{
+  (e: 'change-gravity', value: number): void
+}>()
 let isEmitting = false
-const upper = ref<HTMLDivElement | null>(null)
-const upperRECT = ref<DOMRect | null>(null)
-const lower = ref<HTMLDivElement | null>(null)
-const lowerRECT = ref<DOMRect | null>(null)
+const upper = ref<HTMLDivElement | undefined>()
+const upperRECT = ref<DOMRect | undefined>()
+const lower = ref<HTMLDivElement | undefined>()
+const lowerRECT = ref<DOMRect | undefined>()
 const getRectOfBothElements = (): void => {
-  if(upper.value && lower.value){
-    upperRECT.value = upper.value.getBoundingClientRect()
-    lowerRECT.value = lower.value.getBoundingClientRect()
-  }
+  upperRECT.value = upper.value?.getBoundingClientRect()
+  lowerRECT.value = lower.value?.getBoundingClientRect()
 }
 const collides = (changerPosition: DOMRect, changer: HTMLDivElement): boolean => {
   if(props.positionedPlayer && changerPosition){
