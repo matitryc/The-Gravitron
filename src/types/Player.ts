@@ -5,7 +5,9 @@ export interface Player {
   id: number,
   gravity: Gravity,
   controls: Controls,
-  collides: boolean
+  collides: boolean,
+  position: DOMRect | null,
+  checkpointPosition: DOMRect | null
 }
 
 export interface PlayerPosition {

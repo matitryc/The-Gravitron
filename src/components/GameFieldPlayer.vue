@@ -1,5 +1,5 @@
 <template>
-  <img ref="container"  :src="`./../../player_${index}.png`" class="player relative h-[9vh] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90">
+  <img ref="container"  :src="`./../../player_${index}.png`" class="player absolute h-[9vh] opacity-90">
   <GameFieldPlayerDoppelganger 
     v-if="player.collides"
     @switch="switchPlayerWithDoppelganger"
@@ -8,7 +8,6 @@
     :gravityRotate="gravityRotate" 
     :directionRotate="directionYRotate"
     :gameFieldRECT="gameFieldRECT"
-    :fail="fail"
   />
 </template>
 
@@ -17,12 +16,14 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import type { CurrentMovement, HorizontalDirection } from '../types/Movement.js'
 import type { Player } from '../types/Player.js'
 import type { Gravity } from '../types/Gravity.js'
+import type { Interval } from '../types/Interval.js'
 import GameFieldPlayerDoppelganger from './GameFieldPlayerDoppelganger.vue'
+import useFail from '../composables/useFail.js'
+const { fail, pauseTime } = useFail()
 const props = defineProps<{
   gameFieldRECT: DOMRect | undefined
   player: Player
   index: number
-  fail: boolean
 }>()
 const emit = defineEmits<{
   (e: 'position-change', value: { id: number, position: DOMRect }): void
@@ -37,8 +38,8 @@ const directionYRotate = ref<0 | 180>(180)
 const playerRECT = ref<DOMRect | undefined>()
 const container = ref<HTMLImageElement | undefined>()
 const distance = reactive({
-  x: 0,
-  y: 0
+  x: window.innerWidth / 2,
+  y: window.innerHeight / 2
 })
 const moveIntervals = reactive<CurrentMovement>({
   left: undefined,
@@ -97,14 +98,14 @@ const moveHorizontally = (e: KeyboardEvent): void => {
     direction = 'right'
   }
   if(direction && !moveIntervals[direction]){
-    const intervalID = setInterval(() => handleDistance(direction), movementInterval)
+    const intervalID: Interval = setInterval(() => handleDistance(direction), movementInterval)
     moveIntervals[direction] = intervalID
   }
 }
 const moveVertically = (): void => {
   moveIntervals.down = undefined
   moveIntervals.up = undefined
-  const verticalInterval = setInterval(() => handleDistance(props.player.gravity), movementInterval)
+  const verticalInterval: Interval = setInterval(() => handleDistance(props.player.gravity), movementInterval)
   moveIntervals[props.player.gravity] = verticalInterval
 } 
 const stopOneHorizontalMovement = (e: KeyboardEvent): void => {
@@ -127,6 +128,12 @@ const stopAllHorizontalMovement = () => {
   clearInterval(moveIntervals.right)
   moveIntervals.right = undefined
 }
+const stopVerticalMovement = () => {
+  clearInterval(moveIntervals.up)
+  moveIntervals.up = undefined
+  clearInterval(moveIntervals.down)
+  moveIntervals.down = undefined
+}
 const setPlayersDistanceAndGravityRotation = (): void => {
   if(container.value){
     //-50% so it's positioned in the center at the beginning
@@ -137,7 +144,7 @@ const setPlayersDistanceAndGravityRotation = (): void => {
       directionYRotate.value = 180
     }
     container.value.style.transform = `
-      translate(Calc(-50% + ${distance.x}px), Calc(-50% + ${distance.y}px)) 
+      translate(${distance.x}px, ${distance.y}px) 
       rotateX(${gravityRotate.value}deg) 
       rotateY(${directionYRotate.value}deg)
     `
@@ -145,14 +152,12 @@ const setPlayersDistanceAndGravityRotation = (): void => {
 }
 const switchPlayerWithDoppelganger = (): void => {
   if(props.gameFieldRECT && playerRECT.value){
-    let oppositeDistance: number
-    if(playerRECT.value.x >= props.gameFieldRECT.width / 2){
-      oppositeDistance = - props.gameFieldRECT.width / 2 + playerRECT.value.width / 2
+    if(distance.x >= props.gameFieldRECT.x / 2){
+      distance.x = playerRECT.value.width
     }
     else {
-      oppositeDistance = props.gameFieldRECT.width / 2 - playerRECT.value.width / 2
+      distance.x = props.gameFieldRECT.width - playerRECT.value.width
     }
-    distance.x = oppositeDistance
   }
 }
 watch(props, () => {
@@ -161,6 +166,16 @@ watch(props, () => {
   if(props.gameFieldRECT){
     horizontalMovement.value = props.gameFieldRECT.width / 360 //3px on full res
     verticalMovement.value = props.gameFieldRECT.height / 225
+  }
+})
+watch(fail, () => {
+  if(fail.value){
+    stopAllHorizontalMovement()
+    stopVerticalMovement()
+    window.removeEventListener('keydown', moveHorizontally)
+    setTimeout(() => {
+      console.log(props.player.checkpointPosition)
+    }, pauseTime)
   }
 })
 watch(distance, () => {

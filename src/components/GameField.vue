@@ -1,7 +1,7 @@
 <template>
   <div ref="gameField" class="game-field relative h-full w-full max-w-[130vh] bg-zinc-800 text-gray-50 overflow-hidden">
     <GameFieldBackground />
-    <GameFieldTimer :fail="fail"/>
+    <GameFieldTimer @checkpoint="setPlayersCheckpoint" />
     <GameFieldGravityChangers @change-gravity="changePlayerGravity" :positionedPlayer="currentPlayerPosition" />
     <GameFieldPlayer 
       v-for="(player, index) in players" 
@@ -12,7 +12,6 @@
       :index="index" 
       :gameFieldRECT="gameFieldRECT" 
       :player="player"
-      :fail="fail"
     />
     <button @click="failGame" class="absolute bottom-[10%] left-1/2 -translate-x-1/2 bg-white px-8 py-4 text-black text-3xl">
       KILL!
@@ -27,6 +26,8 @@ import GameFieldPlayer from './GameFieldPlayer.vue'
 import GameFieldTimer from './GameFieldTimer.vue'
 import GameFieldBackground from './GameFieldBackground.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
+import useFail from './../composables/useFail.ts'
+const { failGame } = useFail()
 const players = ref<Player[]>([
   {
     id: Math.random(),
@@ -35,23 +36,30 @@ const players = ref<Player[]>([
       left: 'a',
       right: 'd'
     },
-    collides: false
+    collides: false,
+    position: null,
+    checkpointPosition: null
+  },
+  {
+    id: Math.random(),
+    gravity: 'down',
+    controls: {
+      left: 'ArrowLeft',
+      right: 'ArrowRight'
+    },
+    collides: false,
+    position: null,
+    checkpointPosition: null
   }
 ])
 const gameField = ref<HTMLDivElement | undefined>()
 const gameFieldRECT = ref<DOMRect | undefined>()
-const playerPositions = ref<PlayerPosition[]>([])
-const fail = ref(false)
 const currentPlayerPosition = ref<PlayerPosition | undefined>()
 const changePlayerPosition = (newPosition: PlayerPosition): void => {
   currentPlayerPosition.value = newPosition
-  const oldPosition = playerPositions.value.find(position => position.id === newPosition.id)
-  if(oldPosition){
-    const oldPositionIndex = playerPositions.value.indexOf(oldPosition)
-    playerPositions.value.splice(oldPositionIndex, 1, newPosition)
-  }
-  else {
-    playerPositions.value.push(newPosition)
+  const player = players.value.find(player => player.id === newPosition.id)
+  if(player){
+    player.position = newPosition.position
   }
 }
 const changePlayerGravity = (id: number): void => {
@@ -65,7 +73,11 @@ const changePlayerGravity = (id: number): void => {
     }
   }
 }
-const failGame = () => {}
+const setPlayersCheckpoint = () => {
+  players.value.forEach(player => {
+    player.checkpointPosition = player.position
+  })
+}
 onMounted(() => {
   gameFieldRECT.value = gameField.value?.getBoundingClientRect()
   window.addEventListener('resize', () => {

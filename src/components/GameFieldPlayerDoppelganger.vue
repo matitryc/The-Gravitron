@@ -1,5 +1,5 @@
 <template>
-  <img ref="doppelganger" :src="`./../../player_${index}.png`" class="doppelganger relative h-[9vh] top-0 left-0 -translate-x-full -translate-y-full opacity-90">
+  <img ref="doppelganger" :src="`./../../player_${index}.png`" class="doppelganger absolute h-[9vh] -translate-x-full -translate-y-full opacity-90">
 </template>
 
 <script setup lang="ts">
@@ -10,16 +10,14 @@ const props = defineProps<{
   gravityRotate: number
   directionRotate: number
   gameFieldRECT: DOMRect | undefined
-  fail: boolean
 }>()
 const emit = defineEmits<{
   (e: 'switch'): void
 }>()
 const doppelganger = ref<HTMLImageElement | undefined>()
-const doppelgangerRECT = ref<DOMRect | undefined>()
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
-    if(entry.isIntersecting){
+    if(entry.isIntersecting && doppelganger.value){
       emit('switch')
     }
   })
@@ -32,13 +30,13 @@ watch(props, () => {
   if(doppelganger.value && props.playerPosition && props.gameFieldRECT){
     let distanceX: number
     if(props.playerPosition.x <= window.innerWidth / 2){
-      distanceX = props.gameFieldRECT.width - (window.innerWidth - props.gameFieldRECT.width) / 2 + props.playerPosition.x + props.playerPosition.width / 2
+      distanceX = props.gameFieldRECT.width - (window.innerWidth - props.gameFieldRECT.width) / 2 + props.playerPosition.x
     }
     else {
-      distanceX = props.playerPosition.x - props.gameFieldRECT.width + props.playerPosition.width / 2 - (window.innerWidth - props.gameFieldRECT.width) / 2
+      distanceX = props.playerPosition.x - props.gameFieldRECT.width - (window.innerWidth - props.gameFieldRECT.width) / 2
     }
     doppelganger.value.style.transform = `
-      translate(Calc(-50% + ${distanceX}px), ${props.playerPosition.y - props.playerPosition.height}px) 
+      translate(${distanceX}px, ${props.playerPosition.y}px) 
       rotateX(${props.gravityRotate}deg) 
       rotateY(${props.directionRotate}deg)
     `
@@ -46,12 +44,7 @@ watch(props, () => {
 })
 onMounted(() => {
   if(doppelganger.value){
-    doppelgangerRECT.value = doppelganger.value.getBoundingClientRect()
     observer.observe(doppelganger.value)
   }
 })
 </script>
-
-<style lang="scss" scoped>
-
-</style>

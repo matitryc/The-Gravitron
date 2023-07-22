@@ -1,7 +1,8 @@
+import { Interval } from './Interval.js'
 export interface CurrentMovement {
-  left: number | undefined,
-  right: number | undefined,
-  up: number | undefined,
-  down: number | undefined
+  left: Interval,
+  right: Interval,
+  up: Interval,
+  down: Interval
 }
 export type HorizontalDirection = 'left' | 'right' | null

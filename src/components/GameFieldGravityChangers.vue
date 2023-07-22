@@ -2,7 +2,7 @@
   <div>
     <div ref="upper" class="gravity-changer absolute top-[22.5%] w-full h-[2px] bg-gray-200"></div>
     <div ref="lower" class="gravity-changer absolute bottom-[22.5%] w-full h-[2px] bg-gray-200">
-    </div>
+  </div>
   </div>
  
 </template>

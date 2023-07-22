@@ -6,7 +6,7 @@
     </span>
     <span v-else class="timer flex items-center h-full text-5xl">
       <span>
-        {{ secondsRefactored }}
+        {{ seconds }}
       </span>
       :
       <span>
@@ -19,17 +19,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-defineProps<{
-  fail: boolean
+import type { Interval } from '../types/Interval.js'
+import useFail from '../composables/useFail.js'
+const { pauseTime, fail } = useFail()
+const emit = defineEmits<{
+  (e: 'checkpoint', value: number): void
 }>()
 const start = ref(false)
+const checkpoint = ref(0)
 const gameTimeInMiliseconds = ref(60000)
-const timeInterval = ref<number | null>(null)
+const timeInterval = 25
+const timeIntervalId = ref<Interval>(undefined)
 const seconds = computed(() => {
   return Math.floor(gameTimeInMiliseconds.value / 1000)
-})
-const secondsRefactored = computed<string>(() => {
-  return seconds.value >= 10 ? `${seconds.value}` : `0${seconds.value}`
 })
 const miliseconds = computed(() => {
   return gameTimeInMiliseconds.value - seconds.value * 1000
@@ -45,19 +47,50 @@ const milisecondsRefactored = computed<string>(() => {
     return `0${miliseconds.value}`
   }
 })
+const setTimer = () => {
+  timeIntervalId.value = setInterval(() => {
+    gameTimeInMiliseconds.value -= timeInterval
+  }, timeInterval)
+}
+const revertToCheckpoint = () => {
+  if(timeIntervalId.value){
+    clearInterval(timeIntervalId.value)
+  }
+  const showFullRevertTime = 500 //just for UI
+  const revert: number = checkpoint.value - gameTimeInMiliseconds.value
+  const revertIntervalValue: number = Math.ceil(revert / ((pauseTime - showFullRevertTime) / timeInterval))
+  //1200 rowno przez 2000 czasu co 25 czasu
+  let revertIntervalId = setInterval(() => {
+    gameTimeInMiliseconds.value += revertIntervalValue
+  }, timeInterval)
+  setTimeout(() => {
+    clearInterval(revertIntervalId)
+    gameTimeInMiliseconds.value = checkpoint.value
+  }, pauseTime - showFullRevertTime)
+  setTimeout(() => {
+    setTimer()
+  }, pauseTime)
+}
+watch(fail, () => {
+  console.log(fail)
+  if(fail){
+    revertToCheckpoint()
+  }
+})
 watch(start, () => {
   if(start.value){
-    const interval = 25
-    timeInterval.value = setInterval(() => {
-      gameTimeInMiliseconds.value -= interval
-    }, interval)
+    setTimer()
   }
 })
 watch(gameTimeInMiliseconds, () => {
-  if(gameTimeInMiliseconds.value === 0 && timeInterval.value){
-    clearInterval(timeInterval.value)
+  if(gameTimeInMiliseconds.value % 5000 === 0 && gameTimeInMiliseconds.value !== 0){
+    checkpoint.value = gameTimeInMiliseconds.value
+    emit('checkpoint', checkpoint.value)
   }
-})
+  if(gameTimeInMiliseconds.value === 0 && timeIntervalId.value){
+    clearInterval(timeIntervalId.value)
+  }
+}, { immediate: true })
 onMounted(() => {
   setTimeout(() => {
     start.value = true
