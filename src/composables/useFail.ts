@@ -1,17 +1,16 @@
 import { ref } from 'vue'
 
-export default () => {
-  const fail = ref(false)
-  const pauseTime = 2000
+const fail = ref(false)
+const pauseTime = 2000
 
-  const failGame = () => {
-    fail.value = true
-    console.log('fail', fail.value)
-    setTimeout(() => {
-      fail.value = false
-    }, pauseTime)
-  }
-  
+const failGame = () => {
+  fail.value = true
+  setTimeout(() => {
+    fail.value = false
+  }, pauseTime)
+}
+
+export const useFail = () => {
   return {
     fail,
     pauseTime,

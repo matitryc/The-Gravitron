@@ -7,7 +7,8 @@ export interface Player {
   controls: Controls,
   collides: boolean,
   position: DOMRect | null,
-  checkpointPosition: DOMRect | null
+  checkpointPosition: DOMRect | null,
+  checkpointGravity: Gravity | null
 }
 
 export interface PlayerPosition {

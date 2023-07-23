@@ -26,7 +26,7 @@ import GameFieldPlayer from './GameFieldPlayer.vue'
 import GameFieldTimer from './GameFieldTimer.vue'
 import GameFieldBackground from './GameFieldBackground.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
-import useFail from './../composables/useFail.ts'
+import { useFail } from './../composables/useFail.js'
 const { failGame } = useFail()
 const players = ref<Player[]>([
   {
@@ -38,7 +38,8 @@ const players = ref<Player[]>([
     },
     collides: false,
     position: null,
-    checkpointPosition: null
+    checkpointPosition: null,
+    checkpointGravity: null
   },
   {
     id: Math.random(),
@@ -49,7 +50,8 @@ const players = ref<Player[]>([
     },
     collides: false,
     position: null,
-    checkpointPosition: null
+    checkpointPosition: null,
+    checkpointGravity: null
   }
 ])
 const gameField = ref<HTMLDivElement | undefined>()
@@ -60,6 +62,9 @@ const changePlayerPosition = (newPosition: PlayerPosition): void => {
   const player = players.value.find(player => player.id === newPosition.id)
   if(player){
     player.position = newPosition.position
+    if(!player.checkpointPosition){
+      player.checkpointPosition = newPosition.position
+    }
   }
 }
 const changePlayerGravity = (id: number): void => {
@@ -76,6 +81,7 @@ const changePlayerGravity = (id: number): void => {
 const setPlayersCheckpoint = () => {
   players.value.forEach(player => {
     player.checkpointPosition = player.position
+    player.checkpointGravity = player.gravity
   })
 }
 onMounted(() => {

@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import type { Interval } from '../types/Interval.js'
-import useFail from '../composables/useFail.js'
+import { useFail } from '../composables/useFail.js'
 const { pauseTime, fail } = useFail()
 const emit = defineEmits<{
   (e: 'checkpoint', value: number): void
@@ -59,7 +59,7 @@ const revertToCheckpoint = () => {
   const showFullRevertTime = 500 //just for UI
   const revert: number = checkpoint.value - gameTimeInMiliseconds.value
   const revertIntervalValue: number = Math.ceil(revert / ((pauseTime - showFullRevertTime) / timeInterval))
-  //1200 rowno przez 2000 czasu co 25 czasu
+  //1200 ms equally distributed in 2 seconds
   let revertIntervalId = setInterval(() => {
     gameTimeInMiliseconds.value += revertIntervalValue
   }, timeInterval)
@@ -72,18 +72,18 @@ const revertToCheckpoint = () => {
   }, pauseTime)
 }
 watch(fail, () => {
-  console.log(fail)
-  if(fail){
+  if(fail.value){
     revertToCheckpoint()
   }
 })
 watch(start, () => {
   if(start.value){
     setTimer()
+    emit('checkpoint', checkpoint.value)
   }
 })
 watch(gameTimeInMiliseconds, () => {
-  if(gameTimeInMiliseconds.value % 5000 === 0 && gameTimeInMiliseconds.value !== 0){
+  if(gameTimeInMiliseconds.value % 5000 === 0 && gameTimeInMiliseconds.value !== 0 && !fail.value){
     checkpoint.value = gameTimeInMiliseconds.value
     emit('checkpoint', checkpoint.value)
   }

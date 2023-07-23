@@ -8,6 +8,7 @@
     :gravityRotate="gravityRotate" 
     :directionRotate="directionYRotate"
     :gameFieldRECT="gameFieldRECT"
+    :src="`./../../player_${index}.png`" 
   />
 </template>
 
@@ -18,7 +19,7 @@ import type { Player } from '../types/Player.js'
 import type { Gravity } from '../types/Gravity.js'
 import type { Interval } from '../types/Interval.js'
 import GameFieldPlayerDoppelganger from './GameFieldPlayerDoppelganger.vue'
-import useFail from '../composables/useFail.js'
+import { useFail } from '../composables/useFail.js'
 const { fail, pauseTime } = useFail()
 const props = defineProps<{
   gameFieldRECT: DOMRect | undefined
@@ -122,6 +123,15 @@ const stopOneHorizontalMovement = (e: KeyboardEvent): void => {
     moveIntervals[direction] = undefined
   }
 }
+const setPlayerTransform = () => {
+  if(container.value){
+    container.value.style.transform = `
+      translate(${distance.x}px, ${distance.y}px) 
+      rotateX(${gravityRotate.value}deg) 
+      rotateY(${directionYRotate.value}deg)
+    `
+  }
+}
 const stopAllHorizontalMovement = () => {
   clearInterval(moveIntervals.left)
   moveIntervals.left = undefined
@@ -135,7 +145,6 @@ const stopVerticalMovement = () => {
   moveIntervals.down = undefined
 }
 const setPlayersDistanceAndGravityRotation = (): void => {
-  if(container.value){
     //-50% so it's positioned in the center at the beginning
     if(moveIntervals.right){
       directionYRotate.value = 0
@@ -143,12 +152,7 @@ const setPlayersDistanceAndGravityRotation = (): void => {
     else if(moveIntervals.left){
       directionYRotate.value = 180
     }
-    container.value.style.transform = `
-      translate(${distance.x}px, ${distance.y}px) 
-      rotateX(${gravityRotate.value}deg) 
-      rotateY(${directionYRotate.value}deg)
-    `
-  }
+    setPlayerTransform()
 }
 const switchPlayerWithDoppelganger = (): void => {
   if(props.gameFieldRECT && playerRECT.value){
@@ -174,7 +178,15 @@ watch(fail, () => {
     stopVerticalMovement()
     window.removeEventListener('keydown', moveHorizontally)
     setTimeout(() => {
-      console.log(props.player.checkpointPosition)
+      if(props.player.checkpointPosition && props.gameFieldRECT){
+        distance.x = props.player.checkpointPosition.x - (window.innerWidth - props.gameFieldRECT.width) / 2
+        distance.y = props.player.checkpointPosition.y
+        setPlayerTransform()
+      }
+    }, pauseTime / 2)
+    setTimeout(() => {
+      moveVertically()
+      window.addEventListener('keydown', moveHorizontally)
     }, pauseTime)
   }
 })
