@@ -1,5 +1,5 @@
 <template>
-  <img ref="doppelganger" :src="`./../../player_${index}.png`" class="doppelganger absolute h-[9vh] -translate-x-full -translate-y-full opacity-90">
+  <img ref="doppelganger" class="doppelganger absolute h-[9vh] -translate-x-full -translate-y-full opacity-90">
 </template>
 
 <script setup lang="ts">

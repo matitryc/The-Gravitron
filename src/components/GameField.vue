@@ -13,6 +13,13 @@
       :gameFieldRECT="gameFieldRECT" 
       :player="player"
     />
+    <div class="obstacles absolute top-[20%] bottom-[20%] w-full">
+      <GameFieldObstacle 
+        v-for="obstacle in obstacles" 
+        :key="obstacle.id" 
+        :obstacle="obstacle">
+      </GameFieldObstacle>
+    </div>
     <button @click="failGame" class="absolute bottom-[10%] left-1/2 -translate-x-1/2 bg-white px-8 py-4 text-black text-3xl">
       KILL!
     </button>
@@ -25,7 +32,9 @@ import GameFieldGravityChangers from './GameFieldGravityChangers.vue'
 import GameFieldPlayer from './GameFieldPlayer.vue'
 import GameFieldTimer from './GameFieldTimer.vue'
 import GameFieldBackground from './GameFieldBackground.vue'
+import GameFieldObstacle from './GameFieldObstacle.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
+import type { Obstacle } from '../types/Obstacle.js'
 import { useFail } from './../composables/useFail.js'
 const { failGame } = useFail()
 const players = ref<Player[]>([
@@ -40,18 +49,15 @@ const players = ref<Player[]>([
     position: null,
     checkpointPosition: null,
     checkpointGravity: null
-  },
+  }
+])
+const obstacles = ref<Obstacle[]>([
   {
     id: Math.random(),
-    gravity: 'down',
-    controls: {
-      left: 'ArrowLeft',
-      right: 'ArrowRight'
-    },
-    collides: false,
-    position: null,
-    checkpointPosition: null,
-    checkpointGravity: null
+    row: 1,
+    spawnTime: 1000,
+    direction: 'right',
+    visible: true
   }
 ])
 const gameField = ref<HTMLDivElement | undefined>()

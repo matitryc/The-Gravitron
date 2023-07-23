@@ -12,14 +12,14 @@
 .background {
   background-image: url('./../../zigzag.svg');
   background-repeat: repeat;
-  animation: move 7s linear infinite;
+  animation: move 4s linear infinite;
 }
 @keyframes move {
   from {
     background-position: 0
   }
   to {
-    background-position: -100vw
+    background-position: -779px
   }
 }
 </style>

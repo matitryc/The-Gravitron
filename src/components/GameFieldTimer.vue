@@ -1,5 +1,5 @@
 <template>
-  <span class="absolute flex items-center justify-center text-center text-5xl h-[22.5%] w-full">
+  <span class="absolute flex items-center justify-center text-center text-5xl h-[20%] w-full">
     <span v-if="!start" class="timer-start flex flex-col justify-center text-center h-full blink">
       <span>Survive for</span>
       <span>60 seconds!</span>
@@ -21,13 +21,14 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import type { Interval } from '../types/Interval.js'
 import { useFail } from '../composables/useFail.js'
+import { useGameTime } from '../composables/useGameTime.js'
 const { pauseTime, fail } = useFail()
+const { gameTimeInMiliseconds } = useGameTime()
 const emit = defineEmits<{
   (e: 'checkpoint', value: number): void
 }>()
 const start = ref(false)
 const checkpoint = ref(0)
-const gameTimeInMiliseconds = ref(60000)
 const timeInterval = 25
 const timeIntervalId = ref<Interval>(undefined)
 const seconds = computed(() => {
