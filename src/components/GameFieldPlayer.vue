@@ -1,5 +1,10 @@
 <template>
-  <img ref="container"  :src="`./../../player_${index}.png`" class="player absolute h-[9vh] opacity-90">
+  <img 
+    ref="container"  
+    :src="imgSource"
+    class="player absolute h-[9vh] opacity-90"
+    :class="{ 'respawnBlink': isRespawning }"
+  >
   <GameFieldPlayerDoppelganger 
     v-if="player.collides"
     @switch="switchPlayerWithDoppelganger"
@@ -8,12 +13,13 @@
     :gravityRotate="gravityRotate" 
     :directionRotate="directionYRotate"
     :gameFieldRECT="gameFieldRECT"
-    :src="`./../../player_${index}.png`" 
+    :src="imgSource"
+    :class="{ 'respawnBlink': isRespawning }"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import type { CurrentMovement, HorizontalDirection } from '../types/Movement.js'
 import type { Player } from '../types/Player.js'
 import type { Gravity } from '../types/Gravity.js'
@@ -31,6 +37,7 @@ const emit = defineEmits<{
   (e: 'collision'): void
   (e: 'freedom'): void
 }>()
+const initialFail = ref(false)
 const movementInterval = 1
 const horizontalMovement = ref<number>(0)
 const verticalMovement = ref<number>(0)
@@ -47,6 +54,15 @@ const moveIntervals = reactive<CurrentMovement>({
   right: undefined,
   up: undefined,
   down: undefined
+})
+const isRespawning = computed(() => {
+  return !initialFail.value && fail.value
+})
+const imgSource = computed(() => {
+  return !initialFail.value ? `./../../player_${props.index}.png` : './../../player_fail.png'
+})
+const stylePauseTime = computed(() => {
+  return `${pauseTime / 2}ms`
 })
 const setGravityRotate = (): void => {
   if(props.player.gravity === 'down'){
@@ -174,10 +190,12 @@ watch(props, () => {
 })
 watch(fail, () => {
   if(fail.value){
+    initialFail.value = true
     stopAllHorizontalMovement()
     stopVerticalMovement()
     window.removeEventListener('keydown', moveHorizontally)
     setTimeout(() => {
+      initialFail.value = false
       if(props.player.checkpointPosition && props.gameFieldRECT){
         distance.x = props.player.checkpointPosition.x - (window.innerWidth - props.gameFieldRECT.width) / 2
         distance.y = props.player.checkpointPosition.y
@@ -207,5 +225,99 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$pauseTime: v-bind(stylePauseTime);
+.respawnBlink {
+  animation: respawnBlink $pauseTime;
+}
+
+@keyframes respawnBlink {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  29% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0;
+  }
+  44% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  54% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0;
+  }
+  64% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+  74% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0;
+  }
+  79% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  84% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0;
+  }
+  89% {
+    opacity: 0;
+  }
+  90% {
+    opacity: 1;
+  }
+  91% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 0;
+  }
+  94% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 0;
+  }
+  96% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0;
+  }
+  98% {
+    opacity: 1;
+  }
+  99% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 </style>
