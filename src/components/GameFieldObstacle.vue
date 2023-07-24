@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      v-if="obstacle.spawned && visible"
+      v-if="visible"
       ref="container"
       class="obstacle-box absolute w-[4.8vh] h-[4.8vh]"
       :class="[initialVerticalPosition, initialHorizontalPosition]"
@@ -13,7 +13,7 @@
       :class="[initialVerticalPosition, initialIndicatorHorizontalPosition]"
     >
       <GameFieldObstacleIndicator
-        v-if="obstacle.spawned && !visible"
+        v-if="!visible"
         class="w-full h-full"
         :obstacle="obstacle" 
       />
@@ -24,22 +24,27 @@
 import { ref, computed, watch } from 'vue'
 import type { Obstacle } from '../types/Obstacle.js'
 import type { Interval } from '../types/Interval.js'
+import type { PlayerPosition } from '../types/Player.js'
 import GameFieldObstacleIndicator from './GameFieldObstacleIndicator.vue'
-import { useGameTime } from '../composables/useGameTime'
+import { useGameTime } from '../composables/useGameTime.js'
+const { timeInterval, halfSecond } = useGameTime()
 const props = defineProps<{
   obstacle: Obstacle
   gameFieldRECT: DOMRect | undefined
+  fail: boolean
+  currentPlayerPosition: PlayerPosition | undefined
 }>()
 const emit = defineEmits<{
   (e: 'finish', value: number): void
+  (e: 'failGame'): void
 }>()
-const { pauseTime, timeInterval } = useGameTime()
 const distanceX = ref(0)
 const horizontalMovement = ref(0)
 const visible = ref(false)
 const moveIntervalId = ref<Interval>(undefined)
 const container = ref<HTMLDivElement | null>(null)
 const visibleObstacle = ref<HTMLDivElement | null>(null)
+const obstacleRECT = ref<DOMRect | undefined>()
 const initialVerticalPosition = computed(() => {
   if(props.obstacle.row === 0){
     return 'row-0'
@@ -95,12 +100,14 @@ const move = () => {
     distanceX.value += horizontalMovement.value
   }
 }
+const styleTimeout = computed(() => {
+  return `${halfSecond}ms`
+})
 watch(distanceX, () => {
   if(container.value && props.gameFieldRECT){
     const maxDistance = props.gameFieldRECT.width + container.value.clientWidth * 2
     if(distanceX.value > maxDistance || distanceX.value < -(maxDistance)){
       visible.value = false
-      distanceX.value = 0
       clearInterval(moveIntervalId.value)
       emit('finish', props.obstacle.id)
     }
@@ -109,25 +116,58 @@ watch(distanceX, () => {
         container.value.style.transform = `translateX(Calc(-100% + ${distanceX.value}px))`
       }
       else if(container.value.classList.contains('right')){
-        container.value.style.transform = `translteX(Calc(100% + ${distanceX.value}px))`
+        container.value.style.transform = `translateX(Calc(100% + ${distanceX.value}px))`
       }
     }
   }
 })
 watch(props, () => {
-  if(props.obstacle.spawned){
+  if(props.obstacle.spawned && !props.fail){
     setTimeout(() => {
-      visible.value = true
-      moveIntervalId.value = setInterval(move, timeInterval)
-    }, pauseTime / 4)
+      if(!props.fail && !moveIntervalId.value){
+        visible.value = true
+        moveIntervalId.value = setInterval(move, timeInterval)
+      }
+    }, halfSecond)
+  }
+  else {
+    clearInterval(moveIntervalId.value)
+    container.value?.classList.add('hide')
+    setTimeout(() => {
+      visible.value = false
+    }, halfSecond)
   }
   if(props.gameFieldRECT){
-    horizontalMovement.value = props.gameFieldRECT.width / 100
+    horizontalMovement.value = props.gameFieldRECT.width / 90
   }
-})
+  if(visibleObstacle.value){ //the container has to be rendered with V-if, thus needs to wait for visible = true
+    obstacleRECT.value = visibleObstacle.value.getBoundingClientRect()
+  }
+  if(props.currentPlayerPosition && obstacleRECT.value){
+    const fromLeft = obstacleRECT.value.left
+    const fromTop = obstacleRECT.value.top
+    const playerFromLeft = props.currentPlayerPosition.position.left
+    const playerFromLeftToRightBorder = props.currentPlayerPosition.position.left + props.currentPlayerPosition.position.width
+    const playerFromTop = props.currentPlayerPosition.position.top
+    const playerFromTopToBottomBorder = props.currentPlayerPosition.position.top + props.currentPlayerPosition.position.height
+    if(
+      (fromLeft > playerFromLeft && fromLeft < playerFromLeftToRightBorder) &&
+      (fromTop > playerFromTop && fromTop < playerFromTopToBottomBorder)
+    ) {
+      emit('failGame')
+    }
+  }
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
+$timeout: v-bind(styleTimeout);
+.hide {
+  opacity: 0;
+}
+.obstacle-box {
+  transition: opacity $timeout;
+}
 .left {
   left: 0;
   transform: translateX(-100%)

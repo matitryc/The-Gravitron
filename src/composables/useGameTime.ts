@@ -3,6 +3,9 @@ import { ref } from 'vue'
 const start = ref(false)
 const gameTimeInMiliseconds = ref(60000)
 const pauseTime = 2000
+const second = 1000
+const halfSecond = 500
+const fiveSeconds = 5000
 const timeInterval = 25
 
 export const useGameTime = () => {
@@ -10,6 +13,9 @@ export const useGameTime = () => {
     gameTimeInMiliseconds,
     start,
     pauseTime,
-    timeInterval
+    timeInterval,
+    fiveSeconds,
+    halfSecond,
+    second
   }
 }

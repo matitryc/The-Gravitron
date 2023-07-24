@@ -14,36 +14,38 @@
       :player="player"
     />
     <div class="obstacles absolute top-[20%] bottom-[20%] w-full">
-      <GameFieldObstacle 
-        v-for="obstacle in obstacles"
-        @finish="unspawnObstacle"
-        :key="obstacle.id" 
-        :obstacle="obstacle"
-        :gameFieldRECT="gameFieldRECT"
-      >
-      </GameFieldObstacle>
+      <div v-for="obstacle in obstacles" :key="obstacle.id" >
+        <GameFieldObstacle 
+          v-if="obstacle.spawned"
+          @finish="unspawnObstacle"
+          @fail-game="failGame"
+          :fail="fail"
+          :obstacle="obstacle"
+          :gameFieldRECT="gameFieldRECT"
+          :currentPlayerPosition="currentPlayerPosition"
+        >
+        </GameFieldObstacle>
+      </div>
     </div>
-    <button @click="failGame" class="absolute bottom-[10%] left-1/2 -translate-x-1/2 bg-white px-8 py-4 text-black text-3xl">
-      KILL!
-    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, reactive } from 'vue'
 import GameFieldGravityChangers from './GameFieldGravityChangers.vue'
 import GameFieldPlayer from './GameFieldPlayer.vue'
 import GameFieldTimer from './GameFieldTimer.vue'
 import GameFieldBackground from './GameFieldBackground.vue'
 import GameFieldObstacle from './GameFieldObstacle.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
-import type { Obstacle } from '../types/Obstacle.js'
+import type { Obstacle, ObstacleDirection, ObstacleRow } from '../types/Obstacle.js'
 import type { Interval } from '../types/Interval.js'
+import { getRandomFrom } from '../helpers'
 import { useFail } from './../composables/useFail.js'
 import { useGameTime } from './../composables/useGameTime.js'
 const { fail, failGame } = useFail()
-const { gameTimeInMiliseconds, start, pauseTime, timeInterval } = useGameTime()
-const players = ref<Player[]>([
+const { gameTimeInMiliseconds, start, pauseTime, timeInterval, halfSecond, fiveSeconds, second} = useGameTime()
+const players = reactive<Player[]>([
   {
     id: Math.random(),
     gravity: 'down',
@@ -57,7 +59,7 @@ const players = ref<Player[]>([
     checkpointGravity: null
   }
 ])
-const obstacles = ref<Obstacle[]>([
+const obstacles = reactive<Obstacle[]>([
   {
     id: Math.random(),
     row: 1,
@@ -74,7 +76,7 @@ const gameFieldRECT = ref<DOMRect | undefined>()
 const currentPlayerPosition = ref<PlayerPosition | undefined>()
 const changePlayerPosition = (newPosition: PlayerPosition): void => {
   currentPlayerPosition.value = newPosition
-  const player = players.value.find(player => player.id === newPosition.id)
+  const player = players.find(player => player.id === newPosition.id)
   if(player){
     player.position = newPosition.position
     if(!player.checkpointPosition){
@@ -83,7 +85,7 @@ const changePlayerPosition = (newPosition: PlayerPosition): void => {
   }
 }
 const changePlayerGravity = (id: number): void => {
-  const collidedPlayer: Player | undefined = players.value.find(player => player.id === id)
+  const collidedPlayer: Player | undefined = players.find(player => player.id === id)
   if(collidedPlayer){
     if(collidedPlayer.gravity === 'down'){
       collidedPlayer.gravity = 'up'
@@ -100,7 +102,7 @@ const setTimer = () => {
 }
 const revertToCheckpoint = () => {
   clearInterval(timeIntervalId.value)
-  const showFullRevertTime = 500 //just for UI
+  const showFullRevertTime = halfSecond //just for UI
   const revert: number = checkpoint.value - gameTimeInMiliseconds.value
   const revertIntervalValue: number = Math.ceil(revert / ((pauseTime - showFullRevertTime) / timeInterval))
   //1200 ms equally distributed in 2 seconds
@@ -116,45 +118,91 @@ const revertToCheckpoint = () => {
   }, pauseTime)
 }
 const setPlayersCheckpoint = () => {
-  players.value.forEach(player => {
+  players.forEach(player => {
     player.checkpointPosition = player.position
     player.checkpointGravity = player.gravity
   })
 }
+const createObstacle = (lastRowDirection?: string): Obstacle => {
+  const possibleRows: ObstacleRow[] = [0, 1, 2, 3, 4, 5]
+  const possibleDirections: ObstacleDirection[] = ['left', 'right']
+  const row = getRandomFrom(possibleRows)
+  let direction: ObstacleDirection
+  if(!lastRowDirection){
+    direction = getRandomFrom(possibleDirections)
+  }
+  else {
+    direction = possibleDirections.find(direction => direction !== lastRowDirection) || 'left'
+  }
+  return {
+    id: Math.random(),
+    spawnTime: gameTimeInMiliseconds.value,
+    row,
+    direction,
+    spawned: false
+  }
+}
+const spawnObstacles = () => {
+  const obstaclesToSpawn = obstacles.filter(obstacle => obstacle.spawnTime === gameTimeInMiliseconds.value)
+  if(obstaclesToSpawn){
+    obstaclesToSpawn.forEach(obstacle => obstacle.spawned = true)
+  }
+}
 const unspawnAllObstacles = () => {
-  obstacles.value.forEach(obstacle => obstacle.spawned = false)
+  obstacles.forEach(obstacle => {
+    obstacle.spawned = false
+  })
 }
 const unspawnObstacle = (id: number) => { 
-  const obstacleToUnspawn = obstacles.value.find(obstacle => obstacle.id === id)
+  const obstacleToUnspawn = obstacles.find(obstacle => obstacle.id === id)
   if(obstacleToUnspawn){
     obstacleToUnspawn.spawned = false
   }
 }
 watch(gameTimeInMiliseconds, () => {
-  if(!fail.value){
-    const obstacleToSpawn = obstacles.value.find(obstacle => obstacle.spawnTime === gameTimeInMiliseconds.value)
-    if(obstacleToSpawn){
-      obstacleToSpawn.spawned = true
+  if(gameTimeInMiliseconds.value % fiveSeconds === 0){
+    const isSet = obstacles.find(obstacle => obstacle.spawnTime === gameTimeInMiliseconds.value)
+    if(!isSet){
+      const obstacle = createObstacle()
+      const secondObstacle = createObstacle(obstacle.direction)
+      obstacles.push(obstacle, secondObstacle)
     }
   }
-  if(gameTimeInMiliseconds.value % 5000 === 0 && gameTimeInMiliseconds.value !== 0 && !fail.value){
+  else if(gameTimeInMiliseconds.value % second === 0){
+    const isSet = obstacles.find(obstacle => obstacle.spawnTime === gameTimeInMiliseconds.value)
+    if(!isSet){
+      const obstacle = createObstacle()
+      obstacles.push(obstacle)
+    }
+  }
+  if(start.value){
+    spawnObstacles()
+  }
+  if(gameTimeInMiliseconds.value % fiveSeconds === 0 && gameTimeInMiliseconds.value !== 0 && !fail.value){
     checkpoint.value = gameTimeInMiliseconds.value
     setPlayersCheckpoint()
   }
   if(gameTimeInMiliseconds.value <= 0){
     end.value = true
+    clearInterval(timeIntervalId.value)
   }
-})
+},{ immediate: true })
 watch(start, () => {
   if(start.value){
     setTimer()
     setPlayersCheckpoint()
+    spawnObstacles()
   }
 })
 watch(fail, () => {
   if(fail.value){
     revertToCheckpoint()
-    unspawnAllObstacles()
+    setTimeout(() => {
+      unspawnAllObstacles()
+    }, halfSecond)
+  }
+  else {
+    spawnObstacles()
   }
 })
 onMounted(() => {
