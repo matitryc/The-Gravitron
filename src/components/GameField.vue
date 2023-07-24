@@ -9,6 +9,7 @@
       @position-change="changePlayerPosition"
       @collision="player.collides = true"
       @freedom="player.collides = false"
+      @changeGravityToCheckpoint="setPlayerGravityToCheckpoint"
       :index="index" 
       :gameFieldRECT="gameFieldRECT" 
       :player="player"
@@ -127,6 +128,11 @@ const setPlayersCheckpoint = () => {
     player.checkpointPosition = player.position
     player.checkpointGravity = player.gravity
   })
+}
+const setPlayerGravityToCheckpoint = (player: Player) => {
+  if(player.checkpointGravity){
+    player.gravity = player.checkpointGravity
+  }
 }
 const createObstacle = (lastRowDirection?: string): Obstacle => {
   const possibleRows: ObstacleRow[] = [0, 1, 2, 3, 4, 5]

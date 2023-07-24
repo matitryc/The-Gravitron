@@ -40,12 +40,12 @@ const emit = defineEmits<{
   (e: 'position-change', value: { id: number, position: DOMRect }): void
   (e: 'collision'): void
   (e: 'freedom'): void
+  (e: 'change-gravity-to-checkpoint', value: Player): void
 }>()
 const initialFail = ref(false)
 const movementInterval = 5
 const horizontalMovement = ref<number>(0)
 const verticalMovement = ref<number>(0)
-const gravityRotate = ref(0)
 const directionYRotate = ref<0 | 180>(180)
 const playerRECT = ref<DOMRect | undefined>()
 const container = ref<HTMLImageElement | undefined>()
@@ -68,14 +68,9 @@ const imgSource = computed(() => {
 const stylePauseTime = computed(() => {
   return `${pauseTime / 2}ms`
 })
-const setGravityRotate = (): void => {
-  if(props.player.gravity === 'down'){
-    gravityRotate.value = 0
-  }
-  else {
-    gravityRotate.value = 180
-  }
-}
+const gravityRotate = computed(() => {
+  return props.player.gravity === 'down' ? 0 : 180
+})
 const handleDistance = (direction: HorizontalDirection | Gravity): void => {
   if(playerRECT.value && props.gameFieldRECT){
     const maxHorizontal = ((window.innerWidth - props.gameFieldRECT.width) / 2) + props.gameFieldRECT.width - playerRECT.value.width
@@ -185,7 +180,6 @@ const switchPlayerWithDoppelganger = (): void => {
   }
 }
 watch(props, () => {
-  setGravityRotate()
   setPlayersDistanceAndGravityRotation()
   if(props.gameFieldRECT){
     horizontalMovement.value = props.gameFieldRECT.width / 280
@@ -203,6 +197,7 @@ watch(fail, () => {
       if(props.player.checkpointPosition && props.gameFieldRECT){
         distance.x = props.player.checkpointPosition.x - (window.innerWidth - props.gameFieldRECT.width) / 2
         distance.y = props.player.checkpointPosition.y
+        emit('change-gravity-to-checkpoint', props.player)
         setPlayerTransform()
       }
     }, pauseTime / 2)
@@ -218,7 +213,6 @@ watch(distance, () => {
 })
 onMounted(() => {
   moveVertically()
-  setGravityRotate()
   playerRECT.value = container.value?.getBoundingClientRect()
   window.addEventListener('keydown', moveHorizontally)
   window.addEventListener('keyup', stopOneHorizontalMovement)
