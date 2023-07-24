@@ -62,18 +62,6 @@ const players = reactive<Player[]>([
     position: null,
     checkpointPosition: null,
     checkpointGravity: null
-  },
-  {
-    id: Math.random(),
-    gravity: 'down',
-    controls: {
-      left: 'ArrowLeft',
-      right: 'ArrowRight'
-    },
-    collides: false,
-    position: null,
-    checkpointPosition: null,
-    checkpointGravity: null
   }
 ])
 const obstacles = reactive<Obstacle[]>([
