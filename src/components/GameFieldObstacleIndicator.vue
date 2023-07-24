@@ -1,5 +1,5 @@
 <template>
-  <img ref="indicator" src="./../../triangle.svg" class="indicator" alt="">
+  <img ref="indicator" src="/../../triangle.svg" class="indicator" alt="">
 </template>
 
 <script setup lang="ts">

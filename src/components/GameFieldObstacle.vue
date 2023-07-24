@@ -138,7 +138,7 @@ watch(props, () => {
     }, halfSecond)
   }
   if(props.gameFieldRECT){
-    horizontalMovement.value = props.gameFieldRECT.width / 90
+    horizontalMovement.value = props.gameFieldRECT.width / 70
   }
   if(visibleObstacle.value){ //the container has to be rendered with V-if, thus needs to wait for visible = true
     obstacleRECT.value = visibleObstacle.value.getBoundingClientRect()
