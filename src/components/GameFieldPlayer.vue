@@ -42,7 +42,7 @@ const emit = defineEmits<{
   (e: 'freedom'): void
 }>()
 const initialFail = ref(false)
-const movementInterval = 25
+const movementInterval = 5
 const horizontalMovement = ref<number>(0)
 const verticalMovement = ref<number>(0)
 const gravityRotate = ref(0)
@@ -67,9 +67,6 @@ const imgSource = computed(() => {
 })
 const stylePauseTime = computed(() => {
   return `${pauseTime / 2}ms`
-})
-const styleMovementInterval = computed(() => {
-  return `${movementInterval}ms`
 })
 const setGravityRotate = (): void => {
   if(props.player.gravity === 'down'){
@@ -191,8 +188,8 @@ watch(props, () => {
   setGravityRotate()
   setPlayersDistanceAndGravityRotation()
   if(props.gameFieldRECT){
-    horizontalMovement.value = props.gameFieldRECT.width / 70
-    verticalMovement.value = props.gameFieldRECT.height / 60
+    horizontalMovement.value = props.gameFieldRECT.width / 280
+    verticalMovement.value = props.gameFieldRECT.height / 200
   }
 })
 watch(fail, () => {
@@ -234,10 +231,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 $pauseTime: v-bind(stylePauseTime);
-$movementInterval: v-bind(styleMovementInterval);
-.transition {
-  transition: transform 
-}
 .respawnBlink {
   animation: respawnBlink $pauseTime;
 }
