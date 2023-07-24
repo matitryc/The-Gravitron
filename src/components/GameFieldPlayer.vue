@@ -42,7 +42,7 @@ const emit = defineEmits<{
   (e: 'freedom'): void
 }>()
 const initialFail = ref(false)
-const movementInterval = 1
+const movementInterval = 25
 const horizontalMovement = ref<number>(0)
 const verticalMovement = ref<number>(0)
 const gravityRotate = ref(0)
@@ -67,6 +67,9 @@ const imgSource = computed(() => {
 })
 const stylePauseTime = computed(() => {
   return `${pauseTime / 2}ms`
+})
+const styleMovementInterval = computed(() => {
+  return `${movementInterval}ms`
 })
 const setGravityRotate = (): void => {
   if(props.player.gravity === 'down'){
@@ -177,7 +180,7 @@ const setPlayersDistanceAndGravityRotation = (): void => {
 const switchPlayerWithDoppelganger = (): void => {
   if(props.gameFieldRECT && playerRECT.value){
     if(distance.x >= props.gameFieldRECT.x / 2){
-      distance.x = playerRECT.value.width
+      distance.x = 0
     }
     else {
       distance.x = props.gameFieldRECT.width - playerRECT.value.width
@@ -188,8 +191,8 @@ watch(props, () => {
   setGravityRotate()
   setPlayersDistanceAndGravityRotation()
   if(props.gameFieldRECT){
-    horizontalMovement.value = props.gameFieldRECT.width / 360 //3px on full res
-    verticalMovement.value = props.gameFieldRECT.height / 225
+    horizontalMovement.value = props.gameFieldRECT.width / 70
+    verticalMovement.value = props.gameFieldRECT.height / 60
   }
 })
 watch(fail, () => {
@@ -231,6 +234,10 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 $pauseTime: v-bind(stylePauseTime);
+$movementInterval: v-bind(styleMovementInterval);
+.transition {
+  transition: transform 
+}
 .respawnBlink {
   animation: respawnBlink $pauseTime;
 }
