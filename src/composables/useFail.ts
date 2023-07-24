@@ -1,7 +1,7 @@
 import { ref } from 'vue'
-
+import { useGameTime } from './useGameTime'
+const { pauseTime } = useGameTime()
 const fail = ref(false)
-const pauseTime = 2000
 
 const failGame = () => {
   fail.value = true
@@ -13,7 +13,6 @@ const failGame = () => {
 export const useFail = () => {
   return {
     fail,
-    pauseTime,
     failGame
   }
 }

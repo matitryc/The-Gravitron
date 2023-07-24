@@ -18,19 +18,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
-import type { Interval } from '../types/Interval.js'
-import { useFail } from '../composables/useFail.js'
+import { computed } from 'vue'
 import { useGameTime } from '../composables/useGameTime.js'
-const { pauseTime, fail } = useFail()
-const { gameTimeInMiliseconds } = useGameTime()
-const emit = defineEmits<{
-  (e: 'checkpoint', value: number): void
+const { gameTimeInMiliseconds, start } = useGameTime()
+defineProps<{
+  checkpoint: number
 }>()
-const start = ref(false)
-const checkpoint = ref(0)
-const timeInterval = 25
-const timeIntervalId = ref<Interval>(undefined)
 const seconds = computed(() => {
   return Math.floor(gameTimeInMiliseconds.value / 1000)
 })
@@ -47,55 +40,6 @@ const milisecondsRefactored = computed<string>(() => {
   else {
     return `0${miliseconds.value}`
   }
-})
-const setTimer = () => {
-  timeIntervalId.value = setInterval(() => {
-    gameTimeInMiliseconds.value -= timeInterval
-  }, timeInterval)
-}
-const revertToCheckpoint = () => {
-  if(timeIntervalId.value){
-    clearInterval(timeIntervalId.value)
-  }
-  const showFullRevertTime = 500 //just for UI
-  const revert: number = checkpoint.value - gameTimeInMiliseconds.value
-  const revertIntervalValue: number = Math.ceil(revert / ((pauseTime - showFullRevertTime) / timeInterval))
-  //1200 ms equally distributed in 2 seconds
-  let revertIntervalId = setInterval(() => {
-    gameTimeInMiliseconds.value += revertIntervalValue
-  }, timeInterval)
-  setTimeout(() => {
-    clearInterval(revertIntervalId)
-    gameTimeInMiliseconds.value = checkpoint.value
-  }, pauseTime - showFullRevertTime)
-  setTimeout(() => {
-    setTimer()
-  }, pauseTime)
-}
-watch(fail, () => {
-  if(fail.value){
-    revertToCheckpoint()
-  }
-})
-watch(start, () => {
-  if(start.value){
-    setTimer()
-    emit('checkpoint', checkpoint.value)
-  }
-})
-watch(gameTimeInMiliseconds, () => {
-  if(gameTimeInMiliseconds.value % 5000 === 0 && gameTimeInMiliseconds.value !== 0 && !fail.value){
-    checkpoint.value = gameTimeInMiliseconds.value
-    emit('checkpoint', checkpoint.value)
-  }
-  if(gameTimeInMiliseconds.value === 0 && timeIntervalId.value){
-    clearInterval(timeIntervalId.value)
-  }
-}, { immediate: true })
-onMounted(() => {
-  setTimeout(() => {
-    start.value = true
-  }, 3500)
 })
 </script>
 

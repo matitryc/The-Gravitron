@@ -5,5 +5,5 @@ export interface Obstacle {
   row: ObstacleRow
   spawnTime: number
   direction: 'left' | 'right'
-  visible: boolean
+  spawned: boolean
 }

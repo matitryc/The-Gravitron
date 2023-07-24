@@ -18,16 +18,16 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .move {
-  animation: move 1s;
+  animation: move .5s;
 }
 @keyframes move {
   0% {
     transform: translateX(0)
   }
-  20% {
+  30% {
     transform: translateX(1rem)
   }
-  40% {
+  60% {
     transform: translateX(0)
   }
   100% {

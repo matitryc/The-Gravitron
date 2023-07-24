@@ -1,21 +1,23 @@
 <template>
-  <img 
+  <div>
+    <img 
     ref="container"  
     :src="imgSource"
     class="player absolute h-[9vh] opacity-90"
     :class="{ 'respawnBlink': isRespawning }"
-  >
-  <GameFieldPlayerDoppelganger 
-    v-if="player.collides"
-    @switch="switchPlayerWithDoppelganger"
-    :index="index" 
-    :playerPosition="playerRECT" 
-    :gravityRotate="gravityRotate" 
-    :directionRotate="directionYRotate"
-    :gameFieldRECT="gameFieldRECT"
-    :src="imgSource"
-    :class="{ 'respawnBlink': isRespawning }"
-  />
+    >
+    <GameFieldPlayerDoppelganger 
+      v-if="player.collides"
+      @switch="switchPlayerWithDoppelganger"
+      :index="index" 
+      :playerPosition="playerRECT" 
+      :gravityRotate="gravityRotate" 
+      :directionRotate="directionYRotate"
+      :gameFieldRECT="gameFieldRECT"
+      :src="imgSource"
+      :class="{ 'respawnBlink': isRespawning }"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -26,7 +28,9 @@ import type { Gravity } from '../types/Gravity.js'
 import type { Interval } from '../types/Interval.js'
 import GameFieldPlayerDoppelganger from './GameFieldPlayerDoppelganger.vue'
 import { useFail } from '../composables/useFail.js'
-const { fail, pauseTime } = useFail()
+import { useGameTime } from '../composables/useGameTime'
+const { fail } = useFail()
+const { pauseTime } = useGameTime()
 const props = defineProps<{
   gameFieldRECT: DOMRect | undefined
   player: Player
