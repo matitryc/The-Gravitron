@@ -27,6 +27,11 @@
         </GameFieldObstacle>
       </div>
     </div>
+    <p class="absolute flex flex-col bottom-[5%] text-xl text-white text-center">
+      <span>sterowanie: A | D lub strzałka w lewo | strzałka w prawo</span>
+      <span>może być zbugowane niestety i bedzie sie wychodzilo poza obszar gry.</span>
+      <span>ktokolwiek dostaje, wszyscy przegrywają</span>
+    </p>
   </div>
 </template>
 
@@ -52,6 +57,18 @@ const players = reactive<Player[]>([
     controls: {
       left: 'a',
       right: 'd'
+    },
+    collides: false,
+    position: null,
+    checkpointPosition: null,
+    checkpointGravity: null
+  },
+  {
+    id: Math.random(),
+    gravity: 'down',
+    controls: {
+      left: 'ArrowLeft',
+      right: 'ArrowRight'
     },
     collides: false,
     position: null,
