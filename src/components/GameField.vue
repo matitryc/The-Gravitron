@@ -28,11 +28,6 @@
         </GameFieldObstacle>
       </div>
     </div>
-    <p class="absolute flex flex-col bottom-[5%] text-xl text-white text-center">
-      <span>sterowanie: A | D lub strzałka w lewo | strzałka w prawo</span>
-      <span>może być zbugowane niestety i bedzie sie wychodzilo poza obszar gry.</span>
-      <span>ktokolwiek dostaje, wszyscy przegrywają</span>
-    </p>
   </div>
 </template>
 
@@ -44,6 +39,7 @@ import GameFieldTimer from './GameFieldTimer.vue'
 import GameFieldBackground from './GameFieldBackground.vue'
 import GameFieldObstacle from './GameFieldObstacle.vue'
 import type { Player, PlayerPosition } from '../types/Player.js'
+import type { Controls } from '../types/Controls.js'
 import type { Obstacle, ObstacleDirection, ObstacleRow } from '../types/Obstacle.js'
 import type { Interval } from '../types/Interval.js'
 import { getRandomFrom } from '../helpers'
@@ -51,20 +47,12 @@ import { useFail } from './../composables/useFail.js'
 import { useGameTime } from './../composables/useGameTime.js'
 const { fail, failGame } = useFail()
 const { gameTimeInMiliseconds, start, pauseTime, timeInterval, halfSecond, fiveSeconds, second} = useGameTime()
-const players = reactive<Player[]>([
-  {
-    id: Math.random(),
-    gravity: 'down',
-    controls: {
-      left: 'a',
-      right: 'd'
-    },
-    collides: false,
-    position: null,
-    checkpointPosition: null,
-    checkpointGravity: null
-  }
-])
+const props = defineProps<{
+  playerCount: number
+}>()
+const emit = defineEmits<{
+  (e: 'end'): void
+}>()
 const obstacles = reactive<Obstacle[]>([
   {
     id: Math.random(),
@@ -74,15 +62,15 @@ const obstacles = reactive<Obstacle[]>([
     spawned: false
   }
 ])
+const players = ref<Player[]>([])
 const timeIntervalId = ref<Interval>(undefined)
 const checkpoint = ref(gameTimeInMiliseconds.value)
-const end = ref(false)
 const gameField = ref<HTMLDivElement | undefined>()
 const gameFieldRECT = ref<DOMRect | undefined>()
 const currentPlayerPosition = ref<PlayerPosition | undefined>()
 const changePlayerPosition = (newPosition: PlayerPosition): void => {
   currentPlayerPosition.value = newPosition
-  const player = players.find(player => player.id === newPosition.id)
+  const player = players.value.find(player => player.id === newPosition.id)
   if(player){
     player.position = newPosition.position
     if(!player.checkpointPosition){
@@ -91,7 +79,7 @@ const changePlayerPosition = (newPosition: PlayerPosition): void => {
   }
 }
 const changePlayerGravity = (id: number): void => {
-  const collidedPlayer: Player | undefined = players.find(player => player.id === id)
+  const collidedPlayer: Player | undefined = players.value.find(player => player.id === id)
   if(collidedPlayer){
     if(collidedPlayer.gravity === 'down'){
       collidedPlayer.gravity = 'up'
@@ -124,7 +112,7 @@ const revertToCheckpoint = () => {
   }, pauseTime)
 }
 const setPlayersCheckpoint = () => {
-  players.forEach(player => {
+  players.value.forEach(player => {
     player.checkpointPosition = player.position
     player.checkpointGravity = player.gravity
   })
@@ -134,16 +122,18 @@ const setPlayerGravityToCheckpoint = (player: Player) => {
     player.gravity = player.checkpointGravity
   }
 }
-const createObstacle = (lastRowDirection?: string): Obstacle => {
+const createObstacle = (previousObstacles?: Obstacle[]): Obstacle => {
   const possibleRows: ObstacleRow[] = [0, 1, 2, 3, 4, 5]
   const possibleDirections: ObstacleDirection[] = ['left', 'right']
-  const row = getRandomFrom(possibleRows)
-  let direction: ObstacleDirection
-  if(!lastRowDirection){
-    direction = getRandomFrom(possibleDirections)
+  let row = getRandomFrom(possibleRows)
+  const direction: ObstacleDirection = getRandomFrom(possibleDirections)
+  if(!previousObstacles){
+    row = getRandomFrom(possibleRows)
   }
   else {
-    direction = possibleDirections.find(direction => direction !== lastRowDirection) || 'left'
+    const usedRows = previousObstacles.map(obstacle => obstacle.row)
+    const unusedRows = possibleRows.filter(row => !usedRows.includes(row))
+    row = getRandomFrom(unusedRows)
   }
   return {
     id: Math.random(),
@@ -170,16 +160,52 @@ const unspawnObstacle = (id: number) => {
     obstacleToUnspawn.spawned = false
   }
 }
+watch(props, () => {
+  const playerControls: Controls[] = [
+    //this might not be the best and passing down players directly seems better
+    //but refactoring most of the code here would be neccessary and I dont see many issues with this approach
+    {
+      left: 'a',
+      right: 'd'
+    },
+    {
+      left: 'ArrowLeft',
+      right: 'ArrowRight'
+    },
+    {
+      left: 'j',
+      right: 'l'
+    }
+  ]
+  players.value = []
+  for(let i = 0; i < props.playerCount; i++){
+    const player: Player = {
+      id: Math.random(),
+      controls: playerControls[i],
+      gravity: 'down',
+      collides: false,
+      position: null,
+      checkpointGravity: null,
+      checkpointPosition: null
+    }
+    players.value.push(player)
+  }
+}, { immediate: true })
 watch(gameTimeInMiliseconds, () => {
-  if(gameTimeInMiliseconds.value % fiveSeconds === 0){
+  if(gameTimeInMiliseconds.value % fiveSeconds === 0 && gameTimeInMiliseconds.value > 0){
+    if(!fail.value){
+      checkpoint.value = gameTimeInMiliseconds.value
+      setPlayersCheckpoint()
+    }
     const isSet = obstacles.find(obstacle => obstacle.spawnTime === gameTimeInMiliseconds.value)
     if(!isSet){
       const obstacle = createObstacle()
-      const secondObstacle = createObstacle(obstacle.direction)
-      obstacles.push(obstacle, secondObstacle)
+      const secondObstacle = createObstacle([obstacle])
+      const thirdObstacle = createObstacle([obstacle, secondObstacle])
+      obstacles.push(obstacle, secondObstacle, thirdObstacle)
     }
   }
-  else if(gameTimeInMiliseconds.value % second === 0){
+  else if(gameTimeInMiliseconds.value % second === 0 && gameTimeInMiliseconds.value > second){
     const isSet = obstacles.find(obstacle => obstacle.spawnTime === gameTimeInMiliseconds.value)
     if(!isSet){
       const obstacle = createObstacle()
@@ -189,12 +215,10 @@ watch(gameTimeInMiliseconds, () => {
   if(start.value){
     spawnObstacles()
   }
-  if(gameTimeInMiliseconds.value % fiveSeconds === 0 && gameTimeInMiliseconds.value !== 0 && !fail.value){
-    checkpoint.value = gameTimeInMiliseconds.value
-    setPlayersCheckpoint()
-  }
   if(gameTimeInMiliseconds.value <= 0){
-    end.value = true
+    setTimeout(() => {
+      emit('end')
+    }, second)
     clearInterval(timeIntervalId.value)
   }
 },{ immediate: true })

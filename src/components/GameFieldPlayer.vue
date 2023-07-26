@@ -1,10 +1,10 @@
 <template>
   <div>
     <img 
-    ref="container"  
-    :src="imgSource"
-    class="player absolute h-[9vh] opacity-90"
-    :class="{ 'respawnBlink': isRespawning }"
+      ref="container"  
+      :src="imgSource"
+      class="player absolute h-[9vh] opacity-90"
+      :class="{ 'respawnBlink': isRespawning }"
     >
     <GameFieldPlayerDoppelganger 
       v-if="player.collides"
