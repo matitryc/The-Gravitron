@@ -2,7 +2,7 @@
   <span class="absolute flex items-center justify-center text-center text-5xl h-[20%] w-full">
     <span v-if="!start" class="timer-start flex flex-col justify-center text-center h-full blink">
       <span>Survive for</span>
-      <span>60 seconds!</span>
+      <span>{{ seconds }} seconds!</span>
     </span>
     <span v-else class="timer flex items-center h-full text-5xl">
       <span>

@@ -1,12 +1,18 @@
 import { ref } from 'vue'
 
 const start = ref(false)
-const gameTimeInMiliseconds = ref(5000)
+const fixedGameTime = 5000
+const gameTimeInMiliseconds = ref(fixedGameTime)
 const pauseTime = 2000
 const second = 1000
 const halfSecond = 500
 const fiveSeconds = 5000
 const timeInterval = 25
+
+const resetGameTime = () => {
+  start.value = false
+  gameTimeInMiliseconds.value = fixedGameTime
+}
 
 export const useGameTime = () => {
   return {
@@ -16,6 +22,7 @@ export const useGameTime = () => {
     timeInterval,
     fiveSeconds,
     halfSecond,
-    second
+    second,
+    resetGameTime
   }
 }
