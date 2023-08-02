@@ -36,11 +36,11 @@ const endGameMessage = computed(() => {
 
 <template>
   <div 
-    class="flex items-center justify-center bg-black h-[100vh] text-white overflow-y-auto p-16"
+    class="flex items-center justify-center bg-black min-h-[100dvh] text-white overflow-y-auto p-16"
     :class="{ 'p-0': gameRunning }"
   >
     <TheMenu @start-game="gameRunning = true" @choose-gamemode="setPlayerCount" v-if="!gameRunning && !endScreen"/>
-    <div v-if="gameRunning" class="flex flex-col items-center h-[100vh] w-full">
+    <div v-if="gameRunning" class="absolute flex flex-col items-center h-[100dvh] w-full">
       <GameField @end="endGame" class="flex-grow h-full" :player-count="playerCount"></GameField>
       <p class="relative flex items-center justify-center py-2 min-h-max text-white text-3xl text-center">The Gravitron</p>
     </div>

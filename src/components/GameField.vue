@@ -14,7 +14,7 @@
       :gameFieldRECT="gameFieldRECT" 
       :player="player"
     />
-    <div class="obstacles absolute top-[20%] bottom-[20%] w-full">
+    <div class="obstacles relative top-[Calc(20%_+_2rem)] h-[Calc(60%_-_4rem)] w-full">
       <div v-for="obstacle in obstacles" :key="obstacle.id" >
         <GameFieldObstacle 
           v-if="obstacle.spawned"

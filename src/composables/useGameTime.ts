@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
 const start = ref(false)
-const fixedGameTime = 5000
+const fixedGameTime = 40000
 const gameTimeInMiliseconds = ref(fixedGameTime)
 const pauseTime = 2000
 const second = 1000

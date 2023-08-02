@@ -185,22 +185,22 @@ $timeout: v-bind(styleTimeout);
 }
 .row {
   &-0 {
-    top: 2rem;
+    top: 0;
   }
   &-1 {
-    top: Calc(2rem + 16.67%)
+    top: 16.67%
   }
   &-2 {
-    top: Calc(2rem + 33.33%)
+    top: 33.33%
   }
   &-3 {
-    bottom: Calc(2rem + 33.33%)
+    bottom: 33.33%
   }
   &-4 {
-    bottom: Calc(2rem + 16.67%)
+    bottom: 16.67%
   }
   &-5 {
-    bottom: 2rem;
+    bottom: 0;
   }
 }
 .rotate-right {

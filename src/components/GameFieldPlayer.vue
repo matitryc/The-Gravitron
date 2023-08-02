@@ -160,7 +160,6 @@ const stopVerticalMovement = () => {
   moveIntervals.down = undefined
 }
 const setPlayersDistanceAndGravityRotation = (): void => {
-    //-50% so it's positioned in the center at the beginning
     if(moveIntervals.right){
       directionYRotate.value = 0
     }

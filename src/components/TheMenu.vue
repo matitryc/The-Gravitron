@@ -1,6 +1,6 @@
 <template>
   <TheMenuInstructions @instructions-read="startGame" v-if="instructionsShown"/>
-  <div v-else class="flex flex-col justify-center items-center gap-16 bg-black text-white h-full">
+  <div v-else class="flex flex-col justify-center items-center gap-16 bg-black text-white min-h-full">
     <p class="text-5xl md:text-6xl text-center lg:text-7xl">The Gravitron</p>
     <p class="text-lg lg:text-xl max-w-screen-xl text-center">
       The Gravitron is a replica of a fragment from the game 
@@ -42,6 +42,11 @@ const emit = defineEmits<{
 const instructionsShown = ref(false)
 const chooseGamemode = (playerCount: number) => {
   emit('choose-gamemode', playerCount)
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'smooth'
+  })
   instructionsShown.value = true
 }
 const startGame = () => {

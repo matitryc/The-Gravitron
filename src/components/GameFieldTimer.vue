@@ -1,5 +1,5 @@
 <template>
-  <span class="absolute flex items-center justify-center text-center text-5xl h-[20%] w-full">
+  <span class="absolute flex items-center justify-center text-center text-2xl lg:text-3xl xl:text-5xl h-[20%] w-full">
     <span v-if="!start" class="timer-start flex flex-col justify-center text-center h-full blink">
       <span>Survive for</span>
       <span>{{ seconds }} seconds!</span>
